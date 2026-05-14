@@ -50,9 +50,14 @@ class App(ctk.CTk):
         BroadcastTab(tab3, self._storage, self._tg).pack(fill="both", expand=True)
 
     def _on_closing(self):
-        if self._tg:
-            self._tg.disconnect()
+        try:
+            if self._tg:
+                self._tg.disconnect()
+        except Exception:
+            pass
         self.destroy()
+        import os
+        os._exit(0)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import re
 import asyncio
 import json
 from pathlib import Path
@@ -7,6 +8,39 @@ from telethon.errors import FloodWaitError
 
 CONFIG_FILE = Path(__file__).parent / "config.json"
 SESSION_FILE = str(Path(__file__).parent / "session")
+
+
+def parse_chat_link(url):
+    """Parse a t.me link into (chat_identifier, topic_id).
+
+    Handles:
+      https://t.me/c/1483715443/605  -> (-1001483715443, 605)
+      t.me/lzt_service/1420          -> ('@lzt_service', 1420)
+      https://t.me/+InviteHash       -> (url, None)
+      @username                      -> ('@username', None)
+    """
+    url = url.strip()
+
+    # Private group with topic: t.me/c/CHATID/TOPICID
+    m = re.match(r'(?:https?://)?t\.me/c/(\d+)/(\d+)', url)
+    if m:
+        return int(f"-100{m.group(1)}"), int(m.group(2))
+
+    # Public group with topic: t.me/username/TOPICID
+    m = re.match(r'(?:https?://)?t\.me/([A-Za-z0-9_]+)/(\d+)', url)
+    if m:
+        username = m.group(1)
+        return f"@{username}", int(m.group(2))
+
+    # Invite link: t.me/+hash
+    m = re.match(r'(?:https?://)?t\.me/\+(.+)', url)
+    if m:
+        return url, None
+
+    # Plain @username or username
+    if not url.startswith('@'):
+        url = f"@{url}"
+    return url, None
 
 
 def load_config():
@@ -49,15 +83,23 @@ class TGClient:
     def sign_in(self, code):
         self._run(self._client.sign_in(self._phone, code))
 
-    def get_chat_title(self, chat):
+    def get_chat_title(self, url):
         try:
+            chat, topic_id = parse_chat_link(url)
             entity = self._run(self._client.get_entity(chat))
-            return getattr(entity, "title", None) or getattr(entity, "first_name", chat)
+            title = getattr(entity, "title", None) or getattr(entity, "first_name", str(url))
+            if topic_id:
+                title = f"{title} (тема #{topic_id})"
+            return title
         except Exception:
             return None
 
-    def send_photo_message(self, chat, photo_path, caption):
-        self._run(self._client.send_file(chat, photo_path, caption=caption))
+    def send_photo_message(self, url, photo_path, caption):
+        chat, topic_id = parse_chat_link(url)
+        kwargs = {"caption": caption}
+        if topic_id:
+            kwargs["reply_to"] = topic_id
+        self._run(self._client.send_file(chat, photo_path, **kwargs))
 
     def disconnect(self):
         self._run(self._client.disconnect())

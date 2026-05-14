@@ -1,0 +1,7 @@
+session.session
+config.json
+__pycache__/
+*.pyc
+.pytest_cache/
+data/photos/*
+!data/photos/.gitkeep

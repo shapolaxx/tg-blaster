@@ -1,5 +1,6 @@
+import json
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
 
 
 class ChatDialog(ctk.CTkToplevel):
@@ -43,12 +44,23 @@ class ChatsTab(ctk.CTkFrame):
         self._selected = None
         self._buttons = {}
 
+        # Buttons row
         btn_frame = ctk.CTkFrame(self)
-        btn_frame.pack(fill="x", padx=10, pady=8)
-        ctk.CTkButton(btn_frame, text="Добавить", width=110, command=self._add).pack(side="left", padx=4)
-        ctk.CTkButton(btn_frame, text="Изменить", width=110, command=self._edit).pack(side="left", padx=4)
-        ctk.CTkButton(btn_frame, text="Удалить", width=110, command=self._delete).pack(side="left", padx=4)
-        ctk.CTkButton(btn_frame, text="↻ Названия", width=120, command=self._resolve_all).pack(side="left", padx=4)
+        btn_frame.pack(fill="x", padx=10, pady=(8, 2))
+        ctk.CTkButton(btn_frame, text="Добавить", width=100, command=self._add).pack(side="left", padx=3)
+        ctk.CTkButton(btn_frame, text="Изменить", width=100, command=self._edit).pack(side="left", padx=3)
+        ctk.CTkButton(btn_frame, text="Удалить", width=100, command=self._delete).pack(side="left", padx=3)
+        ctk.CTkButton(btn_frame, text="↻ Названия", width=110, command=self._resolve_all).pack(side="left", padx=3)
+
+        # Export/Import row
+        io_frame = ctk.CTkFrame(self)
+        io_frame.pack(fill="x", padx=10, pady=(2, 4))
+        ctk.CTkButton(io_frame, text="⬆ Экспорт", width=110, command=self._export).pack(side="left", padx=3)
+        ctk.CTkButton(io_frame, text="⬇ Импорт", width=110, command=self._import).pack(side="left", padx=3)
+
+        # Count label
+        self._count_label = ctk.CTkLabel(self, text="", text_color="gray")
+        self._count_label.pack(anchor="e", padx=14)
 
         self._listbox = ctk.CTkScrollableFrame(self)
         self._listbox.pack(fill="both", expand=True, padx=10, pady=5)
@@ -60,7 +72,9 @@ class ChatsTab(ctk.CTkFrame):
             w.destroy()
         self._selected = None
         self._buttons = {}
-        for entry in self._storage.load_chats():
+        chats = self._storage.load_chats()
+        self._count_label.configure(text=f"Чатов: {len(chats)}")
+        for entry in chats:
             name = entry.get("name") or entry["chat"]
             label = name
             if entry.get("suffix"):
@@ -132,3 +146,34 @@ class ChatsTab(ctk.CTkFrame):
             chats = [c for c in self._storage.load_chats() if c["chat"] != self._selected]
             self._storage.save_chats(chats)
             self._refresh()
+
+    def _export(self):
+        path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON", "*.json")],
+            initialfile="chats_export.json",
+        )
+        if path:
+            chats = self._storage.load_chats()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(chats, f, ensure_ascii=False, indent=2)
+            messagebox.showinfo("Экспорт", f"Сохранено {len(chats)} чатов в {path}")
+
+    def _import(self):
+        path = filedialog.askopenfilename(filetypes=[("JSON", "*.json")])
+        if not path:
+            return
+        try:
+            with open(path, encoding="utf-8") as f:
+                imported = json.load(f)
+            imported = [{"chat": c, "suffix": ""} if isinstance(c, str) else c for c in imported]
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось загрузить файл: {e}")
+            return
+        existing = self._storage.load_chats()
+        existing_ids = {c["chat"] for c in existing}
+        added = [c for c in imported if c["chat"] not in existing_ids]
+        existing.extend(added)
+        self._storage.save_chats(existing)
+        self._refresh()
+        messagebox.showinfo("Импорт", f"Добавлено {len(added)} новых чатов")

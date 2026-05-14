@@ -6,6 +6,7 @@ from screens.auth_screen import AuthScreen
 from tabs.templates_tab import TemplatesTab
 from tabs.chats_tab import ChatsTab
 from tabs.broadcast_tab import BroadcastTab
+from tabs.history_tab import HistoryTab
 
 
 ctk.set_appearance_mode("dark")
@@ -16,7 +17,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("TG Blaster")
-        self.geometry("720x620")
+        self.geometry("740x680")
         self._storage = make_storage()
         self._tg = None
         self.withdraw()
@@ -44,10 +45,12 @@ class App(ctk.CTk):
         tab1 = tabs.add("Шаблоны")
         tab2 = tabs.add("Чаты")
         tab3 = tabs.add("Рассылка")
+        tab4 = tabs.add("История")
 
         TemplatesTab(tab1, self._storage).pack(fill="both", expand=True)
         ChatsTab(tab2, self._storage, self._tg).pack(fill="both", expand=True)
         BroadcastTab(tab3, self._storage, self._tg).pack(fill="both", expand=True)
+        HistoryTab(tab4, self._storage).pack(fill="both", expand=True)
 
     def _on_closing(self):
         try:

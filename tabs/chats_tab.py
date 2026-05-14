@@ -48,6 +48,7 @@ class ChatsTab(ctk.CTkFrame):
         ctk.CTkButton(btn_frame, text="Добавить", width=110, command=self._add).pack(side="left", padx=4)
         ctk.CTkButton(btn_frame, text="Изменить", width=110, command=self._edit).pack(side="left", padx=4)
         ctk.CTkButton(btn_frame, text="Удалить", width=110, command=self._delete).pack(side="left", padx=4)
+        ctk.CTkButton(btn_frame, text="↻ Названия", width=120, command=self._resolve_all).pack(side="left", padx=4)
 
         self._listbox = ctk.CTkScrollableFrame(self)
         self._listbox.pack(fill="both", expand=True, padx=10, pady=5)
@@ -78,6 +79,17 @@ class ChatsTab(ctk.CTkFrame):
             self._buttons[self._selected].configure(fg_color="transparent")
         self._selected = chat
         self._buttons[chat].configure(fg_color=("gray75", "gray25"))
+
+    def _resolve_all(self):
+        import threading
+        threading.Thread(target=self._resolve_all_worker, daemon=True).start()
+
+    def _resolve_all_worker(self):
+        chats = self._storage.load_chats()
+        for entry in chats:
+            entry["name"] = self._resolve_name(entry["chat"])
+        self._storage.save_chats(chats)
+        self.after(0, self._refresh)
 
     def _resolve_name(self, chat):
         if self._tg:

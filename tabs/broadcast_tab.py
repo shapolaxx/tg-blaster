@@ -90,15 +90,18 @@ class BroadcastTab(ctk.CTkFrame):
 
     def _broadcast(self, chats, text, photo):
         self._log_write(f"Начинаю рассылку в {len(chats)} чатов...")
-        for i, chat in enumerate(chats, 1):
+        for i, entry in enumerate(chats, 1):
+            chat = entry["chat"]
+            suffix = entry.get("suffix", "")
+            caption = f"{text}\n{suffix}" if suffix else text
             try:
-                self._tg.send_photo_message(chat, photo, text)
+                self._tg.send_photo_message(chat, photo, caption)
                 self._log_write(f"[{i}/{len(chats)}] ✓ {chat}")
             except FloodWaitError as e:
                 self._log_write(f"[{i}/{len(chats)}] FloodWait {e.seconds}s — жду...")
                 time.sleep(e.seconds)
                 try:
-                    self._tg.send_photo_message(chat, photo, text)
+                    self._tg.send_photo_message(chat, photo, caption)
                     self._log_write(f"[{i}/{len(chats)}] ✓ {chat} (после FloodWait)")
                 except Exception as e2:
                     self._log_write(f"[{i}/{len(chats)}] ✗ {chat}: {e2}")

@@ -14,8 +14,13 @@ def test_load_chats_empty(store):
     assert store.load_chats() == []
 
 def test_save_and_load_chats(store):
-    store.save_chats(["@chat1", "@chat2"])
-    assert store.load_chats() == ["@chat1", "@chat2"]
+    chats = [{"chat": "@chat1", "suffix": ""}, {"chat": "@chat2", "suffix": "привет"}]
+    store.save_chats(chats)
+    assert store.load_chats() == chats
+
+def test_load_chats_backward_compat(store):
+    store.chats_file.write_text('["@chat1", "@chat2"]', encoding="utf-8")
+    assert store.load_chats() == [{"chat": "@chat1", "suffix": ""}, {"chat": "@chat2", "suffix": ""}]
 
 def test_load_templates_empty(store):
     assert store.load_templates() == []

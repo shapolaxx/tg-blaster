@@ -13,7 +13,8 @@ class Storage:
     def load_chats(self):
         if not self.chats_file.exists():
             return []
-        return json.loads(self.chats_file.read_text(encoding="utf-8"))
+        data = json.loads(self.chats_file.read_text(encoding="utf-8"))
+        return [{"chat": c, "suffix": ""} if isinstance(c, str) else c for c in data]
 
     def save_chats(self, chats):
         self.chats_file.write_text(

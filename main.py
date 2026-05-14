@@ -46,7 +46,7 @@ class App(ctk.CTk):
         tab3 = tabs.add("Рассылка")
 
         TemplatesTab(tab1, self._storage).pack(fill="both", expand=True)
-        ChatsTab(tab2, self._storage).pack(fill="both", expand=True)
+        ChatsTab(tab2, self._storage, self._tg).pack(fill="both", expand=True)
         BroadcastTab(tab3, self._storage, self._tg).pack(fill="both", expand=True)
 
     def _on_closing(self):

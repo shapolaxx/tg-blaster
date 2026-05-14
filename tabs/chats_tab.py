@@ -36,9 +36,10 @@ class ChatDialog(ctk.CTkToplevel):
 
 
 class ChatsTab(ctk.CTkFrame):
-    def __init__(self, parent, storage):
+    def __init__(self, parent, storage, tg_client=None):
         super().__init__(parent)
         self._storage = storage
+        self._tg = tg_client
         self._selected = None
         self._buttons = {}
 
@@ -59,7 +60,8 @@ class ChatsTab(ctk.CTkFrame):
         self._selected = None
         self._buttons = {}
         for entry in self._storage.load_chats():
-            label = entry["chat"]
+            name = entry.get("name") or entry["chat"]
+            label = name
             if entry.get("suffix"):
                 label += "  [+ суффикс]"
             btn = ctk.CTkButton(
@@ -77,12 +79,18 @@ class ChatsTab(ctk.CTkFrame):
         self._selected = chat
         self._buttons[chat].configure(fg_color=("gray75", "gray25"))
 
+    def _resolve_name(self, chat):
+        if self._tg:
+            return self._tg.get_chat_title(chat) or chat
+        return chat
+
     def _add(self):
         ChatDialog(self, on_save=self._on_add_save)
 
     def _on_add_save(self, entry):
         chats = self._storage.load_chats()
         if not any(c["chat"] == entry["chat"] for c in chats):
+            entry["name"] = self._resolve_name(entry["chat"])
             chats.append(entry)
             self._storage.save_chats(chats)
         self._refresh()
@@ -94,10 +102,12 @@ class ChatsTab(ctk.CTkFrame):
         chats = self._storage.load_chats()
         entry = next((c for c in chats if c["chat"] == self._selected), None)
         if entry:
-            ChatDialog(self, entry=entry, on_save=lambda e: self._on_edit_save(e))
+            ChatDialog(self, entry=entry, on_save=self._on_edit_save)
 
     def _on_edit_save(self, entry):
         chats = self._storage.load_chats()
+        old = next((c for c in chats if c["chat"] == entry["chat"]), {})
+        entry["name"] = old.get("name") or self._resolve_name(entry["chat"])
         chats = [entry if c["chat"] == entry["chat"] else c for c in chats]
         self._storage.save_chats(chats)
         self._refresh()

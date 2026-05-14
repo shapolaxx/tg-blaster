@@ -49,6 +49,13 @@ class TGClient:
     def sign_in(self, code):
         self._run(self._client.sign_in(self._phone, code))
 
+    def get_chat_title(self, chat):
+        try:
+            entity = self._run(self._client.get_entity(chat))
+            return getattr(entity, "title", None) or getattr(entity, "first_name", chat)
+        except Exception:
+            return None
+
     def send_photo_message(self, chat, photo_path, caption):
         self._run(self._client.send_file(chat, photo_path, caption=caption))
 

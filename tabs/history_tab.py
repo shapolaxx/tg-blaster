@@ -10,7 +10,11 @@ class HistoryTab(ctk.CTkFrame):
         btn_frame = ctk.CTkFrame(self)
         btn_frame.pack(fill="x", padx=10, pady=8)
         ctk.CTkButton(btn_frame, text="↻ Обновить", width=110, command=self._refresh).pack(side="left", padx=4)
-        ctk.CTkButton(btn_frame, text="Очистить", width=110, command=self._clear).pack(side="left", padx=4)
+        ctk.CTkButton(
+            btn_frame, text="Очистить", width=110,
+            fg_color="#EF4444", hover_color="#DC2626",
+            command=self._clear,
+        ).pack(side="left", padx=4)
         self._count_label = ctk.CTkLabel(btn_frame, text="", text_color="gray")
         self._count_label.pack(side="left", padx=10)
 

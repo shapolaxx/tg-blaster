@@ -2,3 +2,4 @@ telethon
 customtkinter
 pillow
 pytest
+pystray

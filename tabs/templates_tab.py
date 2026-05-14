@@ -37,7 +37,9 @@ class TemplateDialog(ctk.CTkToplevel):
         return f"Фото: {self._photo_path}" if self._photo_path else "Фото не выбрано"
 
     def _pick_photo(self):
-        path = filedialog.askopenfilename(filetypes=[("Images", "*.jpg *.jpeg *.png")])
+        path = filedialog.askopenfilename(
+            filetypes=[("Media", "*.jpg *.jpeg *.png *.mp4 *.mov *.gif *.webp")]
+        )
         if path:
             self._photo_path = path
             self._photo_label.configure(text=self._photo_display())
@@ -72,7 +74,11 @@ class TemplatesTab(ctk.CTkFrame):
         btn_frame.pack(fill="x", padx=10, pady=8)
         ctk.CTkButton(btn_frame, text="Добавить", width=110, command=self._add).pack(side="left", padx=4)
         ctk.CTkButton(btn_frame, text="Изменить", width=110, command=self._edit).pack(side="left", padx=4)
-        ctk.CTkButton(btn_frame, text="Удалить", width=110, command=self._delete).pack(side="left", padx=4)
+        ctk.CTkButton(
+            btn_frame, text="Удалить", width=110,
+            fg_color="#EF4444", hover_color="#DC2626",
+            command=self._delete,
+        ).pack(side="left", padx=4)
 
         self._listbox = ctk.CTkScrollableFrame(self)
         self._listbox.pack(fill="both", expand=True, padx=10, pady=5)

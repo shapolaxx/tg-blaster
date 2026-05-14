@@ -1,7 +1,18 @@
 session.session
+session.session-journal
 config.json
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# user data
+data/*.json
+data/logs/
 data/photos/*
 !data/photos/.gitkeep
+
+# build artifacts
+build/
+dist/
+TGBlaster.exe
+TGBlaster.spec

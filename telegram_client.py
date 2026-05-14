@@ -6,8 +6,15 @@ from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 
 
-CONFIG_FILE = Path(__file__).parent / "config.json"
-SESSION_FILE = str(Path(__file__).parent / "session")
+def _app_base() -> Path:
+    import sys
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).parent
+
+
+CONFIG_FILE = _app_base() / "config.json"
+SESSION_FILE = str(_app_base() / "session")
 
 
 def parse_chat_link(url):
@@ -105,6 +112,13 @@ class TGClient:
         if topic_id:
             kwargs["reply_to"] = topic_id
         self._run(self._client.send_file(chat, photo_path, **kwargs))
+
+    def send_message(self, url, text):
+        chat, topic_id = parse_chat_link(url)
+        kwargs = {}
+        if topic_id:
+            kwargs["reply_to"] = topic_id
+        self._run(self._client.send_message(chat, text, **kwargs))
 
     def disconnect(self):
         self._run(self._client.disconnect())

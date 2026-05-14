@@ -16,7 +16,14 @@ class Storage:
         if not self.chats_file.exists():
             return []
         data = json.loads(self.chats_file.read_text(encoding="utf-8"))
-        return [{"chat": c, "suffix": ""} if isinstance(c, str) else c for c in data]
+        result = []
+        for c in data:
+            if isinstance(c, str):
+                result.append({"chat": c, "suffix": "", "enabled": True})
+            else:
+                c.setdefault("enabled", True)
+                result.append(c)
+        return result
 
     def save_chats(self, chats):
         self.chats_file.write_text(
@@ -54,6 +61,20 @@ class Storage:
         history.append(entry)
         self.save_history(history)
 
+    def load_chat_stats(self):
+        path = self.chats_file.parent / "chat_stats.json"
+        if not path.exists():
+            return {}
+        return json.loads(path.read_text(encoding="utf-8"))
+
+    def record_chat_stat(self, chat, success):
+        stats = self.load_chat_stats()
+        if chat not in stats:
+            stats[chat] = {"ok": 0, "error": 0}
+        stats[chat]["ok" if success else "error"] += 1
+        path = self.chats_file.parent / "chat_stats.json"
+        path.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
+
     def load_schedule(self):
         if not self.schedule_file.exists():
             return {"enabled": False, "time": "10:00", "template": "", "last_sent_date": ""}
@@ -65,8 +86,15 @@ class Storage:
         )
 
 
+def _app_base() -> Path:
+    import sys
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).parent
+    return Path(__file__).parent
+
+
 def make_storage():
-    base = Path(__file__).parent / "data"
+    base = _app_base() / "data"
     return Storage(
         chats_file=base / "chats.json",
         templates_file=base / "templates.json",

@@ -32,12 +32,17 @@ def parse_chat_link(url):
         username = m.group(1)
         return f"@{username}", int(m.group(2))
 
+    # Plain t.me link without topic: t.me/username
+    m = re.match(r'(?:https?://)?t\.me/([A-Za-z0-9_]+)$', url)
+    if m:
+        return f"@{m.group(1)}", None
+
     # Invite link: t.me/+hash
     m = re.match(r'(?:https?://)?t\.me/\+(.+)', url)
     if m:
         return url, None
 
-    # Plain @username or username
+    # Plain @username or bare username
     if not url.startswith('@'):
         url = f"@{url}"
     return url, None

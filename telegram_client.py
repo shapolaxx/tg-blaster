@@ -95,6 +95,9 @@ class TGClient:
     def sign_in(self, code):
         self._run(self._client.sign_in(self._phone, code))
 
+    def sign_in_password(self, password):
+        self._run(self._client.sign_in(password=password))
+
     def get_chat_title(self, url):
         try:
             chat, topic_id = parse_chat_link(url)

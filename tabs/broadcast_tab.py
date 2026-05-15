@@ -321,9 +321,10 @@ class BroadcastTab(ctk.CTkFrame):
                 break
 
             chat = entry["chat"]
-            suffix = entry.get("suffix", "")
-            raw = f"{text}\n{suffix}" if suffix else text
+            suffix = entry.get("suffix", "").strip()
+            raw = f"{text}\n\n{suffix}" if suffix else text
             caption = self._apply_variables(raw)
+            preview = caption.replace("\n", " ↵ ")[:70]
 
             try:
                 if photo:
@@ -331,7 +332,9 @@ class BroadcastTab(ctk.CTkFrame):
                 else:
                     self._tg.send_message(chat, caption)
                 display = entry.get("name") or chat
-                log(f"[{i}/{total}] ✓ {display}")
+                suffix_tag = " [+суффикс]" if suffix else ""
+                log(f"[{i}/{total}] ✓ {display}{suffix_tag}")
+                log(f"   → {preview}")
                 success += 1
                 self._storage.record_chat_stat(chat, True)
             except FloodWaitError as e:

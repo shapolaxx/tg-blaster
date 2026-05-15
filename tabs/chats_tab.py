@@ -1,6 +1,7 @@
 import json
 import customtkinter as ctk
 from tkinter import messagebox, filedialog
+from utils.paste_fix import fix_entry, fix_textbox
 
 
 class ChatDialog(ctk.CTkToplevel):
@@ -15,12 +16,14 @@ class ChatDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="@username или ссылка t.me/...:").pack(anchor="w", padx=20, pady=(15, 0))
         self._chat = ctk.CTkEntry(self, width=420)
         self._chat.pack(padx=20)
+        fix_entry(self._chat)
         if entry:
             self._chat.insert(0, entry["chat"])
 
         ctk.CTkLabel(self, text="Суффикс (добавляется в конец каждого сообщения, необязательно):").pack(anchor="w", padx=20, pady=(12, 0))
         self._suffix = ctk.CTkTextbox(self, width=420, height=100)
         self._suffix.pack(padx=20)
+        fix_textbox(self._suffix)
         if entry and entry.get("suffix"):
             self._suffix.insert("1.0", entry["suffix"])
 

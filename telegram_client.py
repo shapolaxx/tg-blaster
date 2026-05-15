@@ -120,5 +120,11 @@ class TGClient:
             kwargs["reply_to"] = topic_id
         self._run(self._client.send_message(chat, text, **kwargs))
 
+    def logout(self):
+        try:
+            self._run(self._client.log_out())
+        except Exception:
+            pass
+
     def disconnect(self):
         self._run(self._client.disconnect())

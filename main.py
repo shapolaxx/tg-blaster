@@ -144,10 +144,15 @@ class App(ctk.CTk):
         if not messagebox.askyesno("Выйти из аккаунта", "Выйти из текущего аккаунта?\nПри следующем запуске потребуется войти снова."):
             return
         try:
-            Path(SESSION_FILE + ".session").unlink(missing_ok=True)
-            Path(SESSION_FILE + ".session-journal").unlink(missing_ok=True)
+            if self._tg:
+                self._tg.logout()
         except Exception:
             pass
+        for suffix in (".session", ".session-journal"):
+            try:
+                Path(SESSION_FILE + suffix).unlink(missing_ok=True)
+            except Exception:
+                pass
         import os
         os._exit(0)
 

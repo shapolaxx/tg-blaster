@@ -98,23 +98,44 @@ class TemplateDialog(ctk.CTkToplevel):
 
 class TemplatesTab(ctk.CTkFrame):
     def __init__(self, parent, storage, tg_client=None):
-        super().__init__(parent)
+        super().__init__(parent, fg_color="transparent")
         self._storage = storage
         self._tg = tg_client
         self._selected = None
+        self._buttons = {}
 
-        btn_frame = ctk.CTkFrame(self)
-        btn_frame.pack(fill="x", padx=10, pady=8)
-        ctk.CTkButton(btn_frame, text="Добавить", width=110, command=self._add).pack(side="left", padx=4)
-        ctk.CTkButton(btn_frame, text="Изменить", width=110, command=self._edit).pack(side="left", padx=4)
+        # Header
+        header = ctk.CTkFrame(self, fg_color="transparent")
+        header.pack(fill="x", padx=20, pady=(20, 0))
+        ctk.CTkLabel(
+            header, text="Шаблоны",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color=("#111827", "white"),
+        ).pack(side="left")
+
+        # Action bar
+        bar = ctk.CTkFrame(self, fg_color="transparent")
+        bar.pack(fill="x", padx=20, pady=(16, 8))
         ctk.CTkButton(
-            btn_frame, text="Удалить", width=110,
+            bar, text="+ Добавить", width=120, height=36,
+            fg_color="#F97316", hover_color="#EA6C0A",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            command=self._add,
+        ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(
+            bar, text="Изменить", width=110, height=36,
+            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
+            text_color=("#374151", "#E2E8F0"),
+            command=self._edit,
+        ).pack(side="left", padx=(0, 8))
+        ctk.CTkButton(
+            bar, text="Удалить", width=100, height=36,
             fg_color="#EF4444", hover_color="#DC2626",
             command=self._delete,
-        ).pack(side="left", padx=4)
+        ).pack(side="left")
 
-        self._listbox = ctk.CTkScrollableFrame(self)
-        self._listbox.pack(fill="both", expand=True, padx=10, pady=5)
+        self._listbox = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        self._listbox.pack(fill="both", expand=True, padx=20, pady=(0, 16))
 
         self._refresh()
 
@@ -123,21 +144,58 @@ class TemplatesTab(ctk.CTkFrame):
             w.destroy()
         self._selected = None
         self._buttons = {}
-        for t in self._storage.load_templates():
+        templates = self._storage.load_templates()
+
+        if not templates:
+            ctk.CTkLabel(
+                self._listbox,
+                text="Нет шаблонов\n\nНажмите «+ Добавить» чтобы создать первый шаблон",
+                font=ctk.CTkFont(size=13),
+                text_color=("gray50", "#475569"),
+                justify="center",
+            ).pack(expand=True, pady=60)
+            return
+
+        for t in templates:
+            card = ctk.CTkFrame(
+                self._listbox,
+                fg_color=("white", "#0F172A"),
+                border_width=1,
+                border_color=("#E2E8F0", "#1E293B"),
+                corner_radius=10,
+            )
+            card.pack(fill="x", pady=4)
+
             btn = ctk.CTkButton(
-                self._listbox, text=t["name"], anchor="w",
-                fg_color="transparent", text_color=("black", "white"),
-                hover_color=("gray80", "gray30"),
+                card, text=t["name"], anchor="w",
+                fg_color="transparent",
+                hover_color=("gray92", "#1E293B"),
+                text_color=("#111827", "white"),
+                font=ctk.CTkFont(size=13, weight="bold"),
+                corner_radius=8,
                 command=lambda tid=t["id"]: self._select(tid),
             )
-            btn.pack(fill="x", pady=2)
+            btn.pack(side="left", fill="x", expand=True, padx=4, pady=4)
             self._buttons[t["id"]] = btn
+
+            if t.get("photo"):
+                ctk.CTkLabel(
+                    card, text="МЕДИА",
+                    font=ctk.CTkFont(size=9, weight="bold"),
+                    text_color="#3B82F6",
+                    fg_color=("#DBEAFE", "#1E3A5F"),
+                    corner_radius=4, width=44, height=20,
+                ).pack(side="right", padx=10)
 
     def _select(self, tid):
         if self._selected and self._selected in self._buttons:
-            self._buttons[self._selected].configure(fg_color="transparent")
+            self._buttons[self._selected].configure(
+                fg_color="transparent", text_color=("#111827", "white")
+            )
         self._selected = tid
-        self._buttons[tid].configure(fg_color=("gray75", "gray25"))
+        self._buttons[tid].configure(
+            fg_color=("#DBEAFE", "#1E3A5F"), text_color=("#1D4ED8", "#60A5FA")
+        )
 
     def _add(self):
         TemplateDialog(self, self._storage, tg_client=self._tg, on_save=self._refresh)

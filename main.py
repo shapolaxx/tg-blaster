@@ -16,11 +16,11 @@ ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("blue")
 
 NAV_ITEMS = [
-    ("Дашборд", "dashboard"),
-    ("Шаблоны", "templates"),
-    ("Чаты", "chats"),
-    ("Рассылка", "broadcast"),
-    ("История", "history"),
+    ("Дашборд",  "dashboard",  "○"),
+    ("Шаблоны",  "templates",  "≡"),
+    ("Чаты",     "chats",      "◻"),
+    ("Рассылка", "broadcast",  "▷"),
+    ("История",  "history",    "◷"),
 ]
 
 
@@ -57,68 +57,89 @@ class App(ctk.CTk):
     def _open_main(self):
         self.deiconify()
 
-        sidebar = ctk.CTkFrame(self, width=190, corner_radius=0, fg_color=("gray88", "gray13"))
+        sidebar = ctk.CTkFrame(self, width=210, corner_radius=0, fg_color=("gray90", "#0F172A"))
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
+        # Orange top accent bar
+        ctk.CTkFrame(sidebar, height=3, corner_radius=0, fg_color="#F97316").pack(fill="x")
+
+        # Logo
         ctk.CTkLabel(
             sidebar, text="TG Blaster",
-            font=ctk.CTkFont(size=16, weight="bold"),
-        ).pack(pady=(24, 20))
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color=("#111827", "white"),
+        ).pack(pady=(18, 0))
+        ctk.CTkLabel(
+            sidebar, text="Telegram автопостинг",
+            font=ctk.CTkFont(size=11),
+            text_color=("gray50", "#64748B"),
+        ).pack(pady=(2, 16))
+        ctk.CTkFrame(sidebar, height=1, corner_radius=0, fg_color=("gray78", "#1E293B")).pack(fill="x")
 
-        self._content = ctk.CTkFrame(self, corner_radius=0, fg_color="transparent")
+        self._content = ctk.CTkFrame(self, corner_radius=0, fg_color=("gray95", "#020617"))
         self._content.pack(side="left", fill="both", expand=True)
 
         self._tabs["dashboard"] = DashboardTab(self._content, self._storage)
         self._tabs["templates"] = TemplatesTab(self._content, self._storage, self._tg)
         self._tabs["chats"] = ChatsTab(self._content, self._storage, self._tg)
         self._tabs["broadcast"] = BroadcastTab(self._content, self._storage, self._tg)
-        self._tabs["history"] = HistoryTab(self._content, self._storage)
+        self._tabs["history"] = HistoryTab(self._content, self._storage, self._tg)
 
-        for label, key in NAV_ITEMS:
+        self._nav_stripes = {}
+        for label, key, icon in NAV_ITEMS:
+            row = ctk.CTkFrame(sidebar, fg_color="transparent", height=44)
+            row.pack(fill="x", pady=1)
+            row.pack_propagate(False)
+
+            stripe = ctk.CTkFrame(row, width=3, corner_radius=0, fg_color="transparent")
+            stripe.pack(side="left", fill="y")
+            stripe.pack_propagate(False)
+            self._nav_stripes[key] = stripe
+
             btn = ctk.CTkButton(
-                sidebar, text=label, width=170, height=40,
+                row, text=f"  {icon}  {label}", height=44,
                 anchor="w",
                 fg_color="transparent",
-                text_color=("gray20", "gray80"),
-                hover_color=("gray78", "gray25"),
-                corner_radius=8,
+                text_color=("gray30", "#94A3B8"),
+                hover_color=("gray82", "#1E293B"),
+                corner_radius=0,
+                font=ctk.CTkFont(size=13),
                 command=lambda k=key: self._show(k),
             )
-            btn.pack(pady=3, padx=10)
+            btn.pack(side="left", fill="both", expand=True)
             self._nav_buttons[key] = btn
 
         self._show("dashboard")
 
-        # Bottom buttons
+        # Bottom section
+        ctk.CTkFrame(sidebar, height=1, corner_radius=0, fg_color=("gray78", "#1E293B")).pack(side="bottom", fill="x")
         ctk.CTkButton(
-            sidebar, text="Выйти из аккаунта", width=170, height=34,
+            sidebar, text="  ← Выйти из аккаунта", height=36,
             anchor="w", fg_color="transparent",
-            text_color=("gray50", "gray50"), hover_color=("gray78", "gray25"),
-            corner_radius=8, command=self._logout,
-        ).pack(side="bottom", pady=(0, 6), padx=10)
+            text_color=("gray50", "#475569"), hover_color=("gray82", "#1E293B"),
+            corner_radius=0, font=ctk.CTkFont(size=12),
+            command=self._logout,
+        ).pack(side="bottom", fill="x")
         ctk.CTkButton(
-            sidebar, text="Сменить API", width=170, height=34,
+            sidebar, text="  ⚙ Сменить API", height=36,
             anchor="w", fg_color="transparent",
-            text_color=("gray50", "gray50"), hover_color=("gray78", "gray25"),
-            corner_radius=8, command=self._change_api,
-        ).pack(side="bottom", pady=(4, 0), padx=10)
+            text_color=("gray50", "#475569"), hover_color=("gray82", "#1E293B"),
+            corner_radius=0, font=ctk.CTkFont(size=12),
+            command=self._change_api,
+        ).pack(side="bottom", fill="x")
 
         self._setup_tray()
 
     def _show(self, key):
         if self._current:
             self._tabs[self._current].pack_forget()
-            self._nav_buttons[self._current].configure(
-                fg_color="transparent",
-                text_color=("gray20", "gray80"),
-            )
+            self._nav_buttons[self._current].configure(fg_color="transparent", text_color=("gray30", "#94A3B8"))
+            self._nav_stripes[self._current].configure(fg_color="transparent")
         self._current = key
-        self._tabs[key].pack(fill="both", expand=True, padx=8, pady=8)
-        self._nav_buttons[key].configure(
-            fg_color=("#3B82F6", "#2563EB"),
-            text_color="white",
-        )
+        self._tabs[key].pack(fill="both", expand=True, padx=0, pady=0)
+        self._nav_buttons[key].configure(fg_color=("gray83", "#1E293B"), text_color=("#1E40AF", "#60A5FA"))
+        self._nav_stripes[key].configure(fg_color="#F97316")
         if key == "dashboard":
             self._tabs[key].refresh()
 

@@ -68,12 +68,17 @@ class Storage:
         return json.loads(path.read_text(encoding="utf-8"))
 
     def record_chat_stat(self, chat, success):
+        import time
         stats = self.load_chat_stats()
         if chat not in stats:
             stats[chat] = {"ok": 0, "error": 0}
         stats[chat]["ok" if success else "error"] += 1
+        stats[chat]["last_sent_at"] = time.time()
         path = self.chats_file.parent / "chat_stats.json"
         path.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def get_chat_last_sent(self, chat: str) -> float:
+        return self.load_chat_stats().get(chat, {}).get("last_sent_at", 0.0)
 
     def load_schedule(self):
         if not self.schedule_file.exists():

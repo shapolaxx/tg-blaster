@@ -136,7 +136,7 @@ class TGClient:
         except Exception:
             return None
 
-    def send_photo_message(self, url, photo_path, caption):
+    def send_photo_message(self, url, photo_path, caption) -> int:
         chat, topic_id = parse_chat_link(url)
         clean, entities = _parse_emoji_entities(caption)
         kwargs = {"caption": clean}
@@ -144,9 +144,10 @@ class TGClient:
             kwargs["reply_to"] = topic_id
         if entities:
             kwargs["formatting_entities"] = entities
-        self._run(self._client.send_file(chat, photo_path, **kwargs))
+        msg = self._run(self._client.send_file(chat, photo_path, **kwargs))
+        return msg.id
 
-    def send_message(self, url, text):
+    def send_message(self, url, text) -> int:
         chat, topic_id = parse_chat_link(url)
         clean, entities = _parse_emoji_entities(text)
         kwargs = {}
@@ -154,7 +155,12 @@ class TGClient:
             kwargs["reply_to"] = topic_id
         if entities:
             kwargs["formatting_entities"] = entities
-        self._run(self._client.send_message(chat, clean, **kwargs))
+        msg = self._run(self._client.send_message(chat, clean, **kwargs))
+        return msg.id
+
+    def delete_messages(self, url, msg_ids: list[int]):
+        chat, _ = parse_chat_link(url)
+        self._run(self._client.delete_messages(chat, msg_ids))
 
     def get_custom_emoji_packs(self):
         """Return [(pack_title, [(char, doc_id), ...]), ...] for user's emoji packs."""

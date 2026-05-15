@@ -14,5 +14,4 @@ data/photos/*
 # build artifacts
 build/
 dist/
-TGBlaster.exe
 TGBlaster.spec

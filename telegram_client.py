@@ -180,6 +180,32 @@ class TGClient:
                 continue
         return packs
 
+    def load_emoji_pack_by_name(self, name_or_url):
+        """Load any emoji/sticker pack by short name or t.me/addemoji/ URL.
+        Returns (title, [(char, doc_id), ...]).
+        """
+        from telethon.tl.functions.messages import GetStickerSetRequest
+        from telethon.tl.types import InputStickerSetShortName
+        name = name_or_url.strip()
+        for prefix in (
+            "https://t.me/addemoji/", "t.me/addemoji/",
+            "https://t.me/addstickers/", "t.me/addstickers/",
+        ):
+            if name.lower().startswith(prefix):
+                name = name[len(prefix):]
+                break
+        name = name.rstrip("/")
+        full = self._run(self._client(GetStickerSetRequest(
+            stickerset=InputStickerSetShortName(short_name=name),
+            hash=0,
+        )))
+        doc_to_char = {}
+        for pack in full.packs:
+            for doc_id in pack.documents:
+                doc_to_char[doc_id] = pack.emoticon
+        items = [(doc_to_char.get(d.id, "?"), d.id) for d in full.documents]
+        return full.set.title, items
+
     def logout(self):
         try:
             self._run(self._client.log_out())

@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import threading
 from storage import make_storage
-from telegram_client import TGClient, load_config
+from telegram_client import TGClient, load_config, SESSION_FILE
 from screens.config_screen import ConfigScreen
 from screens.auth_screen import AuthScreen
 from tabs.dashboard_tab import DashboardTab
@@ -88,6 +88,18 @@ class App(ctk.CTk):
             self._nav_buttons[key] = btn
 
         self._show("dashboard")
+
+        # Logout button pinned to bottom of sidebar
+        ctk.CTkButton(
+            sidebar, text="Выйти из аккаунта", width=170, height=34,
+            anchor="w",
+            fg_color="transparent",
+            text_color=("gray50", "gray50"),
+            hover_color=("gray78", "gray25"),
+            corner_radius=8,
+            command=self._logout,
+        ).pack(side="bottom", pady=10, padx=10)
+
         self._setup_tray()
 
     def _show(self, key):
@@ -126,6 +138,18 @@ class App(ctk.CTk):
 
     def _quit_app(self, icon=None, item=None):
         self.after(0, self._force_quit)
+
+    def _logout(self):
+        from tkinter import messagebox
+        if not messagebox.askyesno("Выйти из аккаунта", "Выйти из текущего аккаунта?\nПри следующем запуске потребуется войти снова."):
+            return
+        try:
+            Path(SESSION_FILE + ".session").unlink(missing_ok=True)
+            Path(SESSION_FILE + ".session-journal").unlink(missing_ok=True)
+        except Exception:
+            pass
+        import os
+        os._exit(0)
 
     def _on_closing(self):
         self._force_quit()

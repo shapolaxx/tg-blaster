@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import threading
 from storage import make_storage
-from telegram_client import TGClient, load_config, SESSION_FILE
+from telegram_client import TGClient, load_config, SESSION_FILE, CONFIG_FILE
 from screens.config_screen import ConfigScreen
 from screens.auth_screen import AuthScreen
 from tabs.dashboard_tab import DashboardTab
@@ -89,16 +89,19 @@ class App(ctk.CTk):
 
         self._show("dashboard")
 
-        # Logout button pinned to bottom of sidebar
+        # Bottom buttons
         ctk.CTkButton(
             sidebar, text="Выйти из аккаунта", width=170, height=34,
-            anchor="w",
-            fg_color="transparent",
-            text_color=("gray50", "gray50"),
-            hover_color=("gray78", "gray25"),
-            corner_radius=8,
-            command=self._logout,
-        ).pack(side="bottom", pady=10, padx=10)
+            anchor="w", fg_color="transparent",
+            text_color=("gray50", "gray50"), hover_color=("gray78", "gray25"),
+            corner_radius=8, command=self._logout,
+        ).pack(side="bottom", pady=(0, 6), padx=10)
+        ctk.CTkButton(
+            sidebar, text="Сменить API", width=170, height=34,
+            anchor="w", fg_color="transparent",
+            text_color=("gray50", "gray50"), hover_color=("gray78", "gray25"),
+            corner_radius=8, command=self._change_api,
+        ).pack(side="bottom", pady=(4, 0), padx=10)
 
         self._setup_tray()
 
@@ -138,6 +141,17 @@ class App(ctk.CTk):
 
     def _quit_app(self, icon=None, item=None):
         self.after(0, self._force_quit)
+
+    def _change_api(self):
+        from tkinter import messagebox
+        if not messagebox.askyesno("Сменить API", "Сбросить API credentials?\nПри следующем запуске потребуется ввести новые API ID и Hash."):
+            return
+        try:
+            CONFIG_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+        import os
+        os._exit(0)
 
     def _logout(self):
         from tkinter import messagebox

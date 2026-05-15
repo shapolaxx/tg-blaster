@@ -2,26 +2,31 @@
   {
     "chat": "t.me/lzt_service/1420",
     "suffix": "Контакт для связи @phantommngr\nГарант @zelenka_guarantor_robot",
-    "name": "ZELENKA | УСЛУГИ (тема #1420)"
+    "name": "ZELENKA | УСЛУГИ (тема #1420)",
+    "enabled": true
   },
   {
     "chat": "t.me/ogma_yslugi",
     "suffix": "Контакт для связи @phantommngr\nГарант @garantogma_bot",
-    "name": "Øgma | Чат Услуг"
+    "name": "Øgma | Чат Услуг",
+    "enabled": true
   },
   {
     "chat": "https://t.me/c/1483715443/605",
     "suffix": "Контакт для связи @phantommngr\nГарант @GarantScroogeBot",
-    "name": "Услуги Скруджа (тема #605)"
+    "name": "Услуги Скруджа (тема #605)",
+    "enabled": true
   },
   {
     "chat": "https://t.me/+9DB_Esznk2U3OGEy",
     "suffix": "Контакт для связи @phantommngr\nГарант @getgarantbot",
-    "name": "Get-CHAT УСЛУГИ"
+    "name": "Get-CHAT УСЛУГИ",
+    "enabled": true
   },
   {
     "chat": "https://t.me/Frilans_chat_udalonka_na_domu",
     "suffix": "Контакт для связи @phantommngr",
-    "name": "🍁 ФРИЛАНС 🍁 ЧАТ 🍁"
+    "name": "🍁 ФРИЛАНС 🍁 ЧАТ 🍁",
+    "enabled": true
   }
 ]

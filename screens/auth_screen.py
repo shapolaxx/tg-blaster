@@ -36,8 +36,10 @@ class AuthScreen(ctk.CTkToplevel):
         self._status = ctk.CTkLabel(self, text="")
         self._status.pack()
 
-        from utils.paste_fix import setup_paste
+        from utils.paste_fix import setup_paste, fix_entry
         setup_paste(self)
+        fix_entry(self._phone)
+        fix_entry(self._code)
 
     def _send_code(self):
         phone = self._phone.get().strip()

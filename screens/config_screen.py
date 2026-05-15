@@ -25,8 +25,10 @@ class ConfigScreen(ctk.CTkToplevel):
         self._error.pack(pady=5)
 
         ctk.CTkButton(self, text="Сохранить", command=self._save).pack()
-        from utils.paste_fix import setup_paste
+        from utils.paste_fix import setup_paste, fix_entry
         setup_paste(self)
+        fix_entry(self._api_id)
+        fix_entry(self._api_hash)
 
     def _save(self):
         api_id = self._api_id.get().strip()

@@ -1,7 +1,7 @@
 import uuid
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
-from utils.paste_fix import setup_paste
+from utils.paste_fix import setup_paste, fix_entry, fix_textbox
 
 
 class TemplateDialog(ctk.CTkToplevel):
@@ -22,6 +22,7 @@ class TemplateDialog(ctk.CTkToplevel):
         ctk.CTkLabel(self, text="Название:").pack(anchor="w", padx=20, pady=(15, 0))
         self._name = ctk.CTkEntry(self, width=460)
         self._name.pack(padx=20)
+        fix_entry(self._name)
         if template:
             self._name.insert(0, template["name"])
 
@@ -50,6 +51,7 @@ class TemplateDialog(ctk.CTkToplevel):
 
         self._text = ctk.CTkTextbox(self, width=460, height=160)
         self._text.pack(padx=20)
+        fix_textbox(self._text)
         if template:
             self._text.insert("1.0", template["text"])
 

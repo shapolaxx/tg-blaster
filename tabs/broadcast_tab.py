@@ -6,6 +6,7 @@ import customtkinter as ctk
 from tkinter import filedialog
 from telethon.errors import FloodWaitError
 from utils.toast import show_toast
+from utils.paste_fix import fix_entry
 
 
 class BroadcastTab(ctk.CTkFrame):
@@ -48,6 +49,7 @@ class BroadcastTab(ctk.CTkFrame):
         ctk.CTkLabel(test_row, text="Тест в:", text_color="gray").pack(side="left", padx=(0, 6))
         self._test_chat = ctk.CTkEntry(test_row, placeholder_text="@chat или t.me/...", width=200)
         self._test_chat.pack(side="left")
+        fix_entry(self._test_chat)
         self._test_btn = ctk.CTkButton(
             test_row, text="Отправить", width=90, command=self._test_send
         )
@@ -93,9 +95,11 @@ class BroadcastTab(ctk.CTkFrame):
         ctk.CTkLabel(delay_row, text="Задержка:", text_color="gray").pack(side="left", padx=(4, 6))
         self._delay_min = ctk.CTkEntry(delay_row, width=52, placeholder_text="3")
         self._delay_min.pack(side="left")
+        fix_entry(self._delay_min)
         ctk.CTkLabel(delay_row, text="—", text_color="gray").pack(side="left", padx=4)
         self._delay_max = ctk.CTkEntry(delay_row, width=52, placeholder_text="8")
         self._delay_max.pack(side="left")
+        fix_entry(self._delay_max)
         ctk.CTkLabel(delay_row, text="сек", text_color="gray").pack(side="left", padx=(4, 0))
 
         # Log

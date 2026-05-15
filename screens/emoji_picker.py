@@ -126,6 +126,9 @@ class EmojiPickerDialog(ctk.CTkToplevel):
             for w in self._scroll.winfo_children():
                 w.destroy()
 
+        emoji_font = ctk.CTkFont(family="Segoe UI Emoji", size=22)
+        small_font = ctk.CTkFont(size=9)
+
         for pack_title, items in packs:
             ctk.CTkLabel(
                 self._scroll,
@@ -134,23 +137,37 @@ class EmojiPickerDialog(ctk.CTkToplevel):
                 anchor="w",
             ).pack(fill="x", pady=(8, 2))
 
+            # Count duplicates so user can distinguish same-char stickers
+            char_count: dict[str, int] = {}
+            char_idx: dict[str, int] = {}
+            for char, _ in items:
+                char_count[char] = char_count.get(char, 0) + 1
+
             row_frame = None
             for idx, (char, doc_id) in enumerate(items):
-                if idx % 10 == 0:
+                if idx % 8 == 0:
                     row_frame = ctk.CTkFrame(self._scroll, fg_color="transparent")
                     row_frame.pack(fill="x")
 
+                # Number stickers that share the same unicode char
+                char_idx[char] = char_idx.get(char, 0) + 1
+                label = char if char_count[char] == 1 else f"{char}{char_idx[char]}"
+
+                cell = ctk.CTkFrame(row_frame, fg_color="transparent", width=52, height=52)
+                cell.pack(side="left", padx=2, pady=2)
+                cell.pack_propagate(False)
+
                 ctk.CTkButton(
-                    row_frame,
-                    text=char,
-                    width=44,
-                    height=44,
-                    font=ctk.CTkFont(size=20),
+                    cell,
+                    text=label,
+                    width=50,
+                    height=50,
+                    font=emoji_font,
                     fg_color="transparent",
                     hover_color=("gray80", "gray30"),
                     corner_radius=8,
                     command=lambda c=char, d=doc_id: self._insert(c, d),
-                ).pack(side="left", padx=2, pady=2)
+                ).place(relx=0, rely=0, relwidth=1, relheight=1)
 
     # ── Insert ─────────────────────────────────────────────────────────────
 

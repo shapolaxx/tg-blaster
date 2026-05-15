@@ -35,6 +35,7 @@ class App(ctk.CTk):
         self._tabs = {}
         self._nav_buttons = {}
         self._current = None
+        self.bind_all("<Control-v>", lambda e: e.widget.event_generate("<<Paste>>"))
         self.withdraw()
         self.after(100, self._startup)
 

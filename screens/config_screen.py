@@ -25,6 +25,7 @@ class ConfigScreen(ctk.CTkToplevel):
         self._error.pack(pady=5)
 
         ctk.CTkButton(self, text="Сохранить", command=self._save).pack()
+        self.bind_all("<Control-v>", lambda e: e.widget.event_generate("<<Paste>>"))
 
     def _save(self):
         api_id = self._api_id.get().strip()

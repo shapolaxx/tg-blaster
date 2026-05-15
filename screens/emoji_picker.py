@@ -121,13 +121,28 @@ class EmojiPickerDialog(ctk.CTkToplevel):
 
     # ── Rendering ──────────────────────────────────────────────────────────
 
+    @staticmethod
+    def _is_renderable(char):
+        """Return True if char contains only displayable Unicode emoji codepoints."""
+        for c in char:
+            cp = ord(c)
+            # Variation selectors and ZWJ — invisible but OK
+            if cp in (0x200D, 0x20E3) or 0xFE00 <= cp <= 0xFE0F:
+                continue
+            # Private Use Areas — not renderable
+            if 0xE000 <= cp <= 0xF8FF:
+                return False
+            if cp >= 0xE0000:
+                return False
+        return True
+
     def _render_packs(self, packs, clear=False):
         if clear:
             for w in self._scroll.winfo_children():
                 w.destroy()
 
-        emoji_font = ctk.CTkFont(family="Segoe UI Emoji", size=22)
-        small_font = ctk.CTkFont(size=9)
+        emoji_font = ctk.CTkFont(family="Segoe UI Emoji", size=20)
+        num_font  = ctk.CTkFont(size=11, weight="bold")
 
         for pack_title, items in packs:
             ctk.CTkLabel(
@@ -137,37 +152,27 @@ class EmojiPickerDialog(ctk.CTkToplevel):
                 anchor="w",
             ).pack(fill="x", pady=(8, 2))
 
-            # Count duplicates so user can distinguish same-char stickers
-            char_count: dict[str, int] = {}
-            char_idx: dict[str, int] = {}
-            for char, _ in items:
-                char_count[char] = char_count.get(char, 0) + 1
-
             row_frame = None
             for idx, (char, doc_id) in enumerate(items):
                 if idx % 8 == 0:
                     row_frame = ctk.CTkFrame(self._scroll, fg_color="transparent")
                     row_frame.pack(fill="x")
 
-                # Number stickers that share the same unicode char
-                char_idx[char] = char_idx.get(char, 0) + 1
-                label = char if char_count[char] == 1 else f"{char}{char_idx[char]}"
-
-                cell = ctk.CTkFrame(row_frame, fg_color="transparent", width=52, height=52)
-                cell.pack(side="left", padx=2, pady=2)
-                cell.pack_propagate(False)
+                renderable = self._is_renderable(char)
+                label = char if renderable else f"#{idx + 1}"
+                font  = emoji_font if renderable else num_font
 
                 ctk.CTkButton(
-                    cell,
+                    row_frame,
                     text=label,
-                    width=50,
-                    height=50,
-                    font=emoji_font,
+                    width=52,
+                    height=52,
+                    font=font,
                     fg_color="transparent",
                     hover_color=("gray80", "gray30"),
                     corner_radius=8,
                     command=lambda c=char, d=doc_id: self._insert(c, d),
-                ).place(relx=0, rely=0, relwidth=1, relheight=1)
+                ).pack(side="left", padx=2, pady=2)
 
     # ── Insert ─────────────────────────────────────────────────────────────
 

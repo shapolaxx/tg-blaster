@@ -128,23 +128,14 @@ class App(ctk.CTk):
         self.after(0, self._force_quit)
 
     def _on_closing(self):
-        if self._tray:
-            self.withdraw()
-        else:
-            self._force_quit()
+        self._force_quit()
 
-    def _force_quit(self):
+    def _force_quit(self, icon=None, item=None):
         try:
             if self._tray:
                 self._tray.stop()
         except Exception:
             pass
-        try:
-            if self._tg:
-                self._tg.disconnect()
-        except Exception:
-            pass
-        self.destroy()
         import os
         os._exit(0)
 

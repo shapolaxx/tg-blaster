@@ -6,6 +6,33 @@ from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 
 
+# ── Custom emoji helpers ───────────────────────────────────────────────────────
+
+_EMOJI_RE = re.compile(r'\[(.+?):(\d{10,})\]')
+
+
+def _parse_emoji_entities(text):
+    """Parse [CHAR:DOCUMENT_ID] notation and return (clean_text, entities | None)."""
+    from telethon.tl.types import MessageEntityCustomEmoji
+    entities = []
+    parts = []
+    pos = 0
+    utf16_off = 0
+    for m in _EMOJI_RE.finditer(text):
+        before = text[pos:m.start()]
+        parts.append(before)
+        utf16_off += len(before.encode("utf-16-le")) // 2
+        char = m.group(1)
+        doc_id = int(m.group(2))
+        char_len = len(char.encode("utf-16-le")) // 2
+        entities.append(MessageEntityCustomEmoji(offset=utf16_off, length=char_len, document_id=doc_id))
+        parts.append(char)
+        utf16_off += char_len
+        pos = m.end()
+    parts.append(text[pos:])
+    return "".join(parts), (entities if entities else None)
+
+
 def _app_base() -> Path:
     import sys
     if getattr(sys, "frozen", False):
@@ -111,17 +138,47 @@ class TGClient:
 
     def send_photo_message(self, url, photo_path, caption):
         chat, topic_id = parse_chat_link(url)
-        kwargs = {"caption": caption}
+        clean, entities = _parse_emoji_entities(caption)
+        kwargs = {"caption": clean}
         if topic_id:
             kwargs["reply_to"] = topic_id
+        if entities:
+            kwargs["formatting_entities"] = entities
         self._run(self._client.send_file(chat, photo_path, **kwargs))
 
     def send_message(self, url, text):
         chat, topic_id = parse_chat_link(url)
+        clean, entities = _parse_emoji_entities(text)
         kwargs = {}
         if topic_id:
             kwargs["reply_to"] = topic_id
-        self._run(self._client.send_message(chat, text, **kwargs))
+        if entities:
+            kwargs["formatting_entities"] = entities
+        self._run(self._client.send_message(chat, clean, **kwargs))
+
+    def get_custom_emoji_packs(self):
+        """Return [(pack_title, [(char, doc_id), ...]), ...] for user's emoji packs."""
+        from telethon.tl.functions.messages import GetAllStickersRequest, GetStickerSetRequest
+        from telethon.tl.types import InputStickerSetID
+        all_stickers = self._run(self._client(GetAllStickersRequest(0)))
+        emoji_sets = [s for s in all_stickers.sets if getattr(s, "emojis", False)]
+        packs = []
+        for s in emoji_sets[:20]:
+            try:
+                full = self._run(self._client(GetStickerSetRequest(
+                    stickerset=InputStickerSetID(id=s.id, access_hash=s.access_hash),
+                    hash=0,
+                )))
+                doc_to_char = {}
+                for pack in full.packs:
+                    for doc_id in pack.documents:
+                        doc_to_char[doc_id] = pack.emoticon
+                items = [(doc_to_char.get(d.id, "?"), d.id) for d in full.documents]
+                if items:
+                    packs.append((s.title, items))
+            except Exception:
+                continue
+        return packs
 
     def logout(self):
         try:

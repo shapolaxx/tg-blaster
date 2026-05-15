@@ -9,6 +9,7 @@ from tabs.templates_tab import TemplatesTab
 from tabs.chats_tab import ChatsTab
 from tabs.broadcast_tab import BroadcastTab
 from tabs.history_tab import HistoryTab
+from utils.paste_fix import setup_paste
 
 
 ctk.set_appearance_mode("dark")
@@ -35,7 +36,7 @@ class App(ctk.CTk):
         self._tabs = {}
         self._nav_buttons = {}
         self._current = None
-        self.bind_all("<Control-v>", lambda e: e.widget.event_generate("<<Paste>>"))
+        setup_paste(self)
         self.withdraw()
         self.after(100, self._startup)
 
@@ -69,7 +70,7 @@ class App(ctk.CTk):
         self._content.pack(side="left", fill="both", expand=True)
 
         self._tabs["dashboard"] = DashboardTab(self._content, self._storage)
-        self._tabs["templates"] = TemplatesTab(self._content, self._storage)
+        self._tabs["templates"] = TemplatesTab(self._content, self._storage, self._tg)
         self._tabs["chats"] = ChatsTab(self._content, self._storage, self._tg)
         self._tabs["broadcast"] = BroadcastTab(self._content, self._storage, self._tg)
         self._tabs["history"] = HistoryTab(self._content, self._storage)

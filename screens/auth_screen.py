@@ -36,7 +36,8 @@ class AuthScreen(ctk.CTkToplevel):
         self._status = ctk.CTkLabel(self, text="")
         self._status.pack()
 
-        self.bind_all("<Control-v>", lambda e: e.widget.event_generate("<<Paste>>"))
+        from utils.paste_fix import setup_paste
+        setup_paste(self)
 
     def _send_code(self):
         phone = self._phone.get().strip()

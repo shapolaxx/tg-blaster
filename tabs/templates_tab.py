@@ -1,19 +1,23 @@
 import uuid
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
+from utils.paste_fix import setup_paste
 
 
 class TemplateDialog(ctk.CTkToplevel):
-    def __init__(self, parent, storage, template=None, on_save=None):
+    def __init__(self, parent, storage, template=None, tg_client=None, on_save=None):
         super().__init__(parent)
         self.title("Шаблон")
-        self.geometry("500x440")
+        self.geometry("500x480")
         self.resizable(False, False)
         self.grab_set()
         self._storage = storage
+        self._tg = tg_client
         self._template = template
         self._on_save = on_save
         self._photo_path = template["photo"] if template else ""
+
+        setup_paste(self)
 
         ctk.CTkLabel(self, text="Название:").pack(anchor="w", padx=20, pady=(15, 0))
         self._name = ctk.CTkEntry(self, width=460)
@@ -21,7 +25,29 @@ class TemplateDialog(ctk.CTkToplevel):
         if template:
             self._name.insert(0, template["name"])
 
-        ctk.CTkLabel(self, text="Текст сообщения:").pack(anchor="w", padx=20, pady=(10, 0))
+        # Text label row with optional emoji button
+        text_label_row = ctk.CTkFrame(self, fg_color="transparent")
+        text_label_row.pack(fill="x", padx=20, pady=(10, 0))
+        ctk.CTkLabel(text_label_row, text="Текст сообщения:").pack(side="left")
+        if tg_client:
+            ctk.CTkButton(
+                text_label_row,
+                text="🎭 Emoji",
+                width=90,
+                height=24,
+                font=ctk.CTkFont(size=12),
+                fg_color="transparent",
+                border_width=1,
+                text_color=("gray30", "gray70"),
+                command=self._open_emoji_picker,
+            ).pack(side="right")
+            ctk.CTkLabel(
+                text_label_row,
+                text="формат: [😀:12345678901]",
+                text_color="gray",
+                font=ctk.CTkFont(size=10),
+            ).pack(side="right", padx=6)
+
         self._text = ctk.CTkTextbox(self, width=460, height=160)
         self._text.pack(padx=20)
         if template:
@@ -30,7 +56,7 @@ class TemplateDialog(ctk.CTkToplevel):
         self._photo_label = ctk.CTkLabel(self, text=self._photo_display(), wraplength=440)
         self._photo_label.pack(pady=(8, 2))
 
-        ctk.CTkButton(self, text="Выбрать фото", command=self._pick_photo).pack()
+        ctk.CTkButton(self, text="Выбрать медиа", command=self._pick_photo).pack()
         ctk.CTkButton(self, text="Сохранить", command=self._save).pack(pady=12)
 
     def _photo_display(self):
@@ -43,6 +69,10 @@ class TemplateDialog(ctk.CTkToplevel):
         if path:
             self._photo_path = path
             self._photo_label.configure(text=self._photo_display())
+
+    def _open_emoji_picker(self):
+        from screens.emoji_picker import EmojiPickerDialog
+        EmojiPickerDialog(self, self._tg, self._text)
 
     def _save(self):
         name = self._name.get().strip()
@@ -65,9 +95,10 @@ class TemplateDialog(ctk.CTkToplevel):
 
 
 class TemplatesTab(ctk.CTkFrame):
-    def __init__(self, parent, storage):
+    def __init__(self, parent, storage, tg_client=None):
         super().__init__(parent)
         self._storage = storage
+        self._tg = tg_client
         self._selected = None
 
         btn_frame = ctk.CTkFrame(self)
@@ -107,7 +138,7 @@ class TemplatesTab(ctk.CTkFrame):
         self._buttons[tid].configure(fg_color=("gray75", "gray25"))
 
     def _add(self):
-        TemplateDialog(self, self._storage, on_save=self._refresh)
+        TemplateDialog(self, self._storage, tg_client=self._tg, on_save=self._refresh)
 
     def _edit(self):
         if not self._selected:
@@ -115,7 +146,7 @@ class TemplatesTab(ctk.CTkFrame):
             return
         template = next((t for t in self._storage.load_templates() if t["id"] == self._selected), None)
         if template:
-            TemplateDialog(self, self._storage, template=template, on_save=self._refresh)
+            TemplateDialog(self, self._storage, template=template, tg_client=self._tg, on_save=self._refresh)
 
     def _delete(self):
         if not self._selected:

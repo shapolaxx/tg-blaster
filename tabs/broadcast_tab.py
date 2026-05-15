@@ -149,6 +149,17 @@ class BroadcastTab(ctk.CTkFrame):
             return
         photo = self._override_media or template.get("photo", "")
         text = self._apply_variables(template["text"])
+
+        # Apply suffix if this chat is in the configured list
+        chat_entry = next(
+            (c for c in self._storage.load_chats() if c["chat"].rstrip("/") == chat.rstrip("/")),
+            None,
+        )
+        suffix = (chat_entry or {}).get("suffix", "").strip()
+        if suffix:
+            text = f"{text}\n\n{suffix}"
+            self._log_write(f"Тест: применён суффикс чата")
+
         self._test_btn.configure(state="disabled", text="...")
         threading.Thread(
             target=self._do_test_send, args=(chat, photo, text), daemon=True

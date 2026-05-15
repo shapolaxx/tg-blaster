@@ -1,6 +1,6 @@
 import threading
 import customtkinter as ctk
-from utils.paste_fix import fix_entry
+from utils.paste_fix import fix_entry, setup_paste
 
 
 class EmojiPickerDialog(ctk.CTkToplevel):
@@ -12,6 +12,7 @@ class EmojiPickerDialog(ctk.CTkToplevel):
         self.geometry("560x500")
         self.resizable(True, True)
         self.grab_set()
+        setup_paste(self)
         self._tg = tg_client
         self._text_widget = text_widget
 
@@ -28,10 +29,15 @@ class EmojiPickerDialog(ctk.CTkToplevel):
         self._url_entry.pack(side="left", fill="x", expand=True)
         fix_entry(self._url_entry)
 
+        ctk.CTkButton(
+            url_frame, text="📋", width=36, command=self._paste_url,
+            fg_color="transparent", hover_color=("gray75", "gray30"),
+        ).pack(side="left", padx=(4, 0))
+
         self._load_btn = ctk.CTkButton(
             url_frame, text="Загрузить", width=90, command=self._load_by_url
         )
-        self._load_btn.pack(side="left", padx=(6, 4))
+        self._load_btn.pack(side="left", padx=(4, 4))
 
         ctk.CTkLabel(
             self,
@@ -57,6 +63,19 @@ class EmojiPickerDialog(ctk.CTkToplevel):
         # Auto-load user's own packs
         self._status.configure(text="Загружаю твои паки…")
         threading.Thread(target=self._load_my_packs, daemon=True).start()
+
+    def _paste_url(self):
+        try:
+            text = self.clipboard_get()
+            inner = getattr(self._url_entry, "_entry", None)
+            if inner:
+                inner.delete(0, "end")
+                inner.insert(0, text.strip())
+            else:
+                self._url_entry.delete(0, "end")
+                self._url_entry.insert(0, text.strip())
+        except Exception:
+            pass
 
     # ── Loading ────────────────────────────────────────────────────────────
 

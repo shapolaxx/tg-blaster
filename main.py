@@ -1,5 +1,6 @@
 import customtkinter as ctk
 import threading
+from pathlib import Path
 from storage import make_storage
 from telegram_client import TGClient, load_config, SESSION_FILE, CONFIG_FILE
 from screens.config_screen import ConfigScreen
@@ -28,7 +29,8 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("TG Blaster")
-        self.geometry("920x680")
+        self.geometry("980x680")
+        self.minsize(820, 540)
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
         self._storage = make_storage()
         self._tg = None
@@ -50,14 +52,18 @@ class App(ctk.CTk):
         self._tg.start_loop()
         self._tg.connect()
         if not self._tg.is_authorized():
-            AuthScreen(self, self._tg, on_done=self._open_main)
+            AuthScreen(self, self._tg, on_done=self._after_auth)
         else:
-            self._open_main()
+            self._after_auth()
+
+    def _after_auth(self):
+        threading.Thread(target=self._tg.sync_dialogs, daemon=True).start()
+        self._open_main()
 
     def _open_main(self):
         self.deiconify()
 
-        sidebar = ctk.CTkFrame(self, width=210, corner_radius=0, fg_color=("gray90", "#0F172A"))
+        sidebar = ctk.CTkFrame(self, width=200, corner_radius=0, fg_color=("gray92", "#0D1117"))
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
@@ -65,19 +71,23 @@ class App(ctk.CTk):
         ctk.CTkFrame(sidebar, height=3, corner_radius=0, fg_color="#F97316").pack(fill="x")
 
         # Logo
+        logo_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
+        logo_frame.pack(fill="x", padx=16, pady=(20, 0))
         ctk.CTkLabel(
-            sidebar, text="TG Blaster",
-            font=ctk.CTkFont(size=18, weight="bold"),
-            text_color=("#111827", "white"),
-        ).pack(pady=(18, 0))
+            logo_frame, text="⚡ TG Blaster",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color=("#111827", "#F1F5F9"),
+            anchor="w",
+        ).pack(anchor="w")
         ctk.CTkLabel(
-            sidebar, text="Telegram автопостинг",
-            font=ctk.CTkFont(size=11),
-            text_color=("gray50", "#64748B"),
-        ).pack(pady=(2, 16))
-        ctk.CTkFrame(sidebar, height=1, corner_radius=0, fg_color=("gray78", "#1E293B")).pack(fill="x")
+            logo_frame, text="автопостинг в Telegram",
+            font=ctk.CTkFont(size=10),
+            text_color=("gray50", "#475569"),
+            anchor="w",
+        ).pack(anchor="w", pady=(1, 0))
+        ctk.CTkFrame(sidebar, height=1, corner_radius=0, fg_color=("gray80", "#1E2740")).pack(fill="x", pady=(14, 4))
 
-        self._content = ctk.CTkFrame(self, corner_radius=0, fg_color=("gray95", "#020617"))
+        self._content = ctk.CTkFrame(self, corner_radius=0, fg_color=("gray96", "#0B0F1E"))
         self._content.pack(side="left", fill="both", expand=True)
 
         self._tabs["dashboard"] = DashboardTab(self._content, self._storage)
@@ -98,13 +108,13 @@ class App(ctk.CTk):
             self._nav_stripes[key] = stripe
 
             btn = ctk.CTkButton(
-                row, text=f"  {icon}  {label}", height=44,
+                row, text=f"  {icon}  {label}", height=40,
                 anchor="w",
                 fg_color="transparent",
-                text_color=("gray30", "#94A3B8"),
-                hover_color=("gray82", "#1E293B"),
+                text_color=("gray30", "#8B9DC3"),
+                hover_color=("gray84", "#161D2E"),
                 corner_radius=0,
-                font=ctk.CTkFont(size=13),
+                font=ctk.CTkFont(size=12),
                 command=lambda k=key: self._show(k),
             )
             btn.pack(side="left", fill="both", expand=True)
@@ -138,7 +148,7 @@ class App(ctk.CTk):
             self._nav_stripes[self._current].configure(fg_color="transparent")
         self._current = key
         self._tabs[key].pack(fill="both", expand=True, padx=0, pady=0)
-        self._nav_buttons[key].configure(fg_color=("gray83", "#1E293B"), text_color=("#1E40AF", "#60A5FA"))
+        self._nav_buttons[key].configure(fg_color=("gray86", "#141E30"), text_color=("#1E40AF", "#60A5FA"))
         self._nav_stripes[key].configure(fg_color="#F97316")
         if key == "dashboard":
             self._tabs[key].refresh()
@@ -172,8 +182,7 @@ class App(ctk.CTk):
             CONFIG_FILE.unlink(missing_ok=True)
         except Exception:
             pass
-        import os
-        os._exit(0)
+        self._restart()
 
     def _logout(self):
         from tkinter import messagebox
@@ -189,8 +198,17 @@ class App(ctk.CTk):
                 Path(SESSION_FILE + suffix).unlink(missing_ok=True)
             except Exception:
                 pass
-        import os
-        os._exit(0)
+        self._restart()
+
+    def _restart(self):
+        import os, sys
+        try:
+            if self._tray:
+                self._tray.stop()
+        except Exception:
+            pass
+        executable = sys.executable if not getattr(sys, "frozen", False) else sys.executable
+        os.execv(executable, [executable] + sys.argv)
 
     def _on_closing(self):
         self._force_quit()

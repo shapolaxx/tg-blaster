@@ -24,21 +24,22 @@ class HistoryTab(ctk.CTkFrame):
 
         # Action bar
         bar = ctk.CTkFrame(self, fg_color="transparent")
-        bar.pack(fill="x", padx=20, pady=(12, 8))
-        ctk.CTkButton(bar, text="↻ Обновить", width=110, height=34, command=self._refresh,
-                      fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-                      text_color=("#374151", "#E2E8F0")).pack(side="left", padx=(0, 6))
+        bar.pack(fill="x", padx=20, pady=(10, 6))
+        _b = dict(height=32, font=ctk.CTkFont(size=12))
+        ctk.CTkButton(bar, text="↻ Обновить", width=96, command=self._refresh,
+                      fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+                      text_color=("#374151", "#CBD5E1"), **_b).pack(side="left", padx=(0, 4))
         self._del_btn = ctk.CTkButton(
-            bar, text="Удалить выбранные", width=150, height=34,
-            fg_color="#EF4444", hover_color="#DC2626",
-            state="disabled", command=self._delete_selected,
+            bar, text="Удалить выбранные", width=140,
+            fg_color=("#FEE2E2", "#3B0F0F"), hover_color=("#FECACA", "#4C1414"),
+            text_color=("#B91C1C", "#FCA5A5"),
+            state="disabled", command=self._delete_selected, **_b,
         )
-        self._del_btn.pack(side="left", padx=(0, 6))
+        self._del_btn.pack(side="left", padx=(0, 4))
         ctk.CTkButton(
-            bar, text="Очистить всё", width=120, height=34,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("gray50", "#64748B"),
-            command=self._clear,
+            bar, text="Очистить всё", width=106,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("gray50", "#64748B"), command=self._clear, **_b,
         ).pack(side="left")
 
         self._listbox = ctk.CTkScrollableFrame(self, fg_color="transparent")
@@ -70,9 +71,9 @@ class HistoryTab(ctk.CTkFrame):
 
         card = ctk.CTkFrame(
             self._listbox,
-            fg_color=("white", "#0F172A"),
+            fg_color=("white", "#111827"),
             border_width=1,
-            border_color=("#E2E8F0", "#1E293B"),
+            border_color=("#E5E7EB", "#1E2740"),
             corner_radius=8,
         )
         card.pack(fill="x", pady=3)

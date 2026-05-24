@@ -16,7 +16,7 @@ class DashboardTab(ctk.CTkFrame):
         ).pack(side="left")
         ctk.CTkButton(
             header, text="↻", width=32, height=32, command=self.refresh,
-            fg_color="transparent", hover_color=("gray80", "#1E293B"),
+            fg_color="transparent", hover_color=("gray80", "#1E2740"),
             font=ctk.CTkFont(size=16),
         ).pack(side="right")
 
@@ -45,9 +45,9 @@ class DashboardTab(ctk.CTkFrame):
     def _stat_card(self, parent, title, subtitle, accent, col):
         card = ctk.CTkFrame(
             parent,
-            fg_color=("white", "#0F172A"),
+            fg_color=("white", "#111827"),
             border_width=1,
-            border_color=("#E2E8F0", "#1E293B"),
+            border_color=("#E2E8F0", "#1E2740"),
             corner_radius=12,
         )
         card.grid(row=0, column=col, padx=6, pady=0, sticky="nsew")
@@ -79,9 +79,9 @@ class DashboardTab(ctk.CTkFrame):
     def _info_card(self, label, default):
         card = ctk.CTkFrame(
             self,
-            fg_color=("white", "#0F172A"),
+            fg_color=("white", "#111827"),
             border_width=1,
-            border_color=("#E2E8F0", "#1E293B"),
+            border_color=("#E2E8F0", "#1E2740"),
             corner_radius=10,
         )
         card.pack(fill="x", padx=24, pady=5)

@@ -21,72 +21,21 @@ class BroadcastTab(ctk.CTkFrame):
         self._failed_entries = []
 
         # ── Header ────────────────────────────────────────────────────────
+        hdr = ctk.CTkFrame(self, fg_color="transparent")
+        hdr.pack(fill="x", padx=20, pady=(16, 4))
         ctk.CTkLabel(
-            self, text="Рассылка",
+            hdr, text="Рассылка",
             font=ctk.CTkFont(size=22, weight="bold"),
-            text_color=("#111827", "white"),
+            text_color=("#111827", "#F1F5F9"),
             anchor="w",
-        ).pack(fill="x", padx=20, pady=(20, 0))
+        ).pack(side="left")
 
-        # ── Template selector card ────────────────────────────────────────
-        self._section_lbl("ШАБЛОН")
-        top_card = ctk.CTkFrame(
-            self, fg_color=("white", "#0F172A"),
-            border_width=1, border_color=("#E2E8F0", "#1E293B"), corner_radius=10,
-        )
-        top_card.pack(fill="x", padx=20, pady=(0, 0))
-        top = ctk.CTkFrame(top_card, fg_color="transparent")
-        top.pack(fill="x", padx=12, pady=8)
-        ctk.CTkLabel(top, text="Шаблон:", text_color=("gray50", "#64748B")).pack(side="left", padx=(0, 6))
-        self._template_var = ctk.StringVar()
-        self._template_menu = ctk.CTkOptionMenu(
-            top, variable=self._template_var, values=["—"],
-            command=self._on_template_select, width=200,
-        )
-        self._template_menu.pack(side="left")
-        ctk.CTkButton(top, text="↻", width=32, height=32, command=self.refresh_templates,
-                      fg_color="transparent", hover_color=("gray80", "#1E293B")).pack(side="left", padx=4)
-
-        preview_inner = ctk.CTkFrame(top_card, fg_color="transparent")
-        preview_inner.pack(fill="x", padx=12, pady=(0, 4))
-        self._preview_text = ctk.CTkLabel(
-            preview_inner, text="", wraplength=540,
-            justify="left", text_color=("#374151", "#CBD5E1"),
-        )
-        self._preview_text.pack(anchor="w")
-        self._media_label = ctk.CTkLabel(
-            preview_inner, text="Медиа: нет", text_color=("gray50", "#64748B"),
-            font=ctk.CTkFont(size=11),
-        )
-        self._media_label.pack(anchor="w")
-
-        media_test = ctk.CTkFrame(top_card, fg_color="transparent")
-        media_test.pack(fill="x", padx=12, pady=(4, 10))
-        ctk.CTkButton(
-            media_test, text="Сменить медиа", height=30, width=150,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("#374151", "#E2E8F0"), font=ctk.CTkFont(size=12),
-            command=self._change_media,
-        ).pack(side="left", padx=(0, 12))
-        ctk.CTkLabel(media_test, text="Тест в:", text_color=("gray50", "#64748B")).pack(side="left", padx=(0, 6))
-        self._test_chat = ctk.CTkEntry(media_test, placeholder_text="@chat или t.me/...", width=180, height=30)
-        self._test_chat.pack(side="left")
-        fix_entry(self._test_chat)
-        self._test_btn = ctk.CTkButton(
-            media_test, text="Отправить тест", width=120, height=30,
-            fg_color="#2563EB", hover_color="#1D4ED8",
-            font=ctk.CTkFont(size=12),
-            command=self._test_send,
-        )
-        self._test_btn.pack(side="left", padx=6)
-
-        # ── Main action ───────────────────────────────────────────────────
-        self._section_lbl("ОТПРАВКА")
+        # ── Main action card (always visible at top) ───────────────────────
         action_card = ctk.CTkFrame(
-            self, fg_color=("white", "#0F172A"),
-            border_width=1, border_color=("#E2E8F0", "#1E293B"), corner_radius=10,
+            self, fg_color=("white", "#111827"),
+            border_width=1, border_color=("#E5E7EB", "#1E2740"), corner_radius=10,
         )
-        action_card.pack(fill="x", padx=20)
+        action_card.pack(fill="x", padx=20, pady=(0, 6))
         action_inner = ctk.CTkFrame(action_card, fg_color="transparent")
         action_inner.pack(fill="x", padx=12, pady=10)
         self._send_btn = ctk.CTkButton(
@@ -98,26 +47,81 @@ class BroadcastTab(ctk.CTkFrame):
         self._send_btn.pack(side="left", fill="x", expand=True, padx=(0, 6))
         self._retry_btn = ctk.CTkButton(
             action_inner, text="Повторить ошибки", height=44, width=150,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("#374151", "#E2E8F0"),
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("#374151", "#94A3B8"),
             state="disabled",
             command=self._retry_failed,
         )
         self._retry_btn.pack(side="left")
-
         self._progress = ctk.CTkProgressBar(action_card, height=4)
         self._progress.set(0)
         self._progress.pack(fill="x", padx=0, pady=(0, 0))
 
-        # ── Auto-schedule section ─────────────────────────────────────────
+        # ── Scrollable settings area ───────────────────────────────────────
+        self._scroll = ctk.CTkScrollableFrame(self, fg_color="transparent", corner_radius=0)
+        self._scroll.pack(fill="both", expand=True, padx=20, pady=(0, 0))
+
+        # ── Template selector card ─────────────────────────────────────────
+        self._section_lbl("ШАБЛОН")
+        top_card = ctk.CTkFrame(
+            self._scroll, fg_color=("white", "#111827"),
+            border_width=1, border_color=("#E5E7EB", "#1E2740"), corner_radius=10,
+        )
+        top_card.pack(fill="x", pady=(0, 0))
+        top = ctk.CTkFrame(top_card, fg_color="transparent")
+        top.pack(fill="x", padx=12, pady=8)
+        ctk.CTkLabel(top, text="Шаблон:", text_color=("gray50", "#64748B")).pack(side="left", padx=(0, 6))
+        self._template_var = ctk.StringVar()
+        self._template_menu = ctk.CTkOptionMenu(
+            top, variable=self._template_var, values=["—"],
+            command=self._on_template_select, width=200,
+        )
+        self._template_menu.pack(side="left")
+        ctk.CTkButton(top, text="↻", width=32, height=32, command=self.refresh_templates,
+                      fg_color="transparent", hover_color=("gray80", "#1A2236")).pack(side="left", padx=4)
+
+        preview_inner = ctk.CTkFrame(top_card, fg_color=("gray95", "#0B0F1E"), corner_radius=6)
+        preview_inner.pack(fill="x", padx=12, pady=(0, 6))
+        self._preview_text = ctk.CTkLabel(
+            preview_inner, text="Выберите шаблон...", wraplength=500,
+            justify="left", text_color=("#374151", "#94A3B8"),
+            font=ctk.CTkFont(size=12),
+        )
+        self._preview_text.pack(anchor="w", padx=8, pady=(6, 2))
+        self._media_label = ctk.CTkLabel(
+            preview_inner, text="Медиа: нет", text_color=("gray50", "#475569"),
+            font=ctk.CTkFont(size=11),
+        )
+        self._media_label.pack(anchor="w", padx=8, pady=(0, 6))
+
+        media_test = ctk.CTkFrame(top_card, fg_color="transparent")
+        media_test.pack(fill="x", padx=12, pady=(4, 10))
+        ctk.CTkButton(
+            media_test, text="Сменить медиа", height=30, width=130,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("#374151", "#CBD5E1"), font=ctk.CTkFont(size=12),
+            command=self._change_media,
+        ).pack(side="left", padx=(0, 12))
+        ctk.CTkLabel(media_test, text="Тест в:", text_color=("gray50", "#64748B")).pack(side="left", padx=(0, 6))
+        self._test_chat = ctk.CTkEntry(media_test, placeholder_text="@chat или t.me/...", width=170, height=30)
+        self._test_chat.pack(side="left")
+        fix_entry(self._test_chat)
+        self._test_btn = ctk.CTkButton(
+            media_test, text="Отправить тест", width=120, height=30,
+            fg_color="#2563EB", hover_color="#1D4ED8",
+            font=ctk.CTkFont(size=12),
+            command=self._test_send,
+        )
+        self._test_btn.pack(side="left", padx=6)
+
+        # ── Auto-schedule section ──────────────────────────────────────────
         self._section_lbl("АВТО-РАССЫЛКА")
         sched_outer = ctk.CTkFrame(
-            self, fg_color=("white", "#0F172A"),
-            border_width=1, border_color=("#E2E8F0", "#1E293B"), corner_radius=10,
+            self._scroll, fg_color=("white", "#111827"),
+            border_width=1, border_color=("#E5E7EB", "#1E2740"), corner_radius=10,
         )
-        sched_outer.pack(fill="x", padx=20, pady=(0, 0))
+        sched_outer.pack(fill="x", pady=(0, 0))
 
-        # Row 1 — checkbox + mode selector
         sched_r1 = ctk.CTkFrame(sched_outer, fg_color="transparent")
         sched_r1.pack(fill="x", padx=12, pady=(10, 2))
         self._sched_var = ctk.BooleanVar()
@@ -130,29 +134,30 @@ class BroadcastTab(ctk.CTkFrame):
         self._sched_mode.pack(side="left")
         self._sched_status = ctk.CTkLabel(sched_r1, text="Выключено", text_color=("gray50", "#64748B"))
         self._sched_status.pack(side="left", padx=12)
+        self._countdown_lbl = ctk.CTkLabel(
+            sched_r1, text="", font=ctk.CTkFont(size=12),
+            text_color=("#2563EB", "#60A5FA"),
+        )
+        self._countdown_lbl.pack(side="left")
 
-        # Row 2 — time/interval input + save
         sched_r2 = ctk.CTkFrame(sched_outer, fg_color="transparent")
         sched_r2.pack(fill="x", padx=12, pady=(0, 10))
-
         self._sched_interval = ctk.CTkEntry(sched_r2, width=60, placeholder_text="2")
         fix_entry(self._sched_interval)
         self._sched_interval_lbl = ctk.CTkLabel(sched_r2, text="ч. между рассылками", text_color="gray")
-
         self._sched_time = ctk.CTkEntry(sched_r2, width=80, placeholder_text="10:00")
         fix_entry(self._sched_time)
         self._sched_time_lbl = ctk.CTkLabel(sched_r2, text="время отправки (ЧЧ:ММ)", text_color="gray")
-
         self._sched_save_btn = ctk.CTkButton(sched_r2, text="Сохранить", width=100, command=self._save_schedule)
         self._sched_save_btn.pack(side="left")
 
-        # ── Delay + Cooldown card ─────────────────────────────────────────
+        # ── Delay + Cooldown card ──────────────────────────────────────────
         self._section_lbl("НАСТРОЙКИ")
         settings_card = ctk.CTkFrame(
-            self, fg_color=("white", "#0F172A"),
-            border_width=1, border_color=("#E2E8F0", "#1E293B"), corner_radius=10,
+            self._scroll, fg_color=("white", "#111827"),
+            border_width=1, border_color=("#E5E7EB", "#1E2740"), corner_radius=10,
         )
-        settings_card.pack(fill="x", padx=20, pady=(0, 0))
+        settings_card.pack(fill="x", pady=(0, 12))
         delay_row = ctk.CTkFrame(settings_card, fg_color="transparent")
         delay_row.pack(fill="x", padx=12, pady=8)
         ctk.CTkLabel(delay_row, text="Задержка:", text_color=("gray50", "#64748B")).pack(side="left", padx=(0, 6))
@@ -171,28 +176,30 @@ class BroadcastTab(ctk.CTkFrame):
         fix_entry(self._cooldown)
         ctk.CTkLabel(delay_row, text="ч. (0 = выкл)", text_color=("gray50", "#64748B")).pack(side="left", padx=(4, 0))
 
-        # ── Log ───────────────────────────────────────────────────────────
-        self._section_lbl("ЛОГ")
+        # ── Log (fixed at bottom, always visible) ─────────────────────────
+        self._section_lbl("ЛОГ", parent=self)
         self._log = ctk.CTkTextbox(
-            self, state="disabled",
-            fg_color=("white", "#0F172A"),
-            border_width=1, border_color=("#E2E8F0", "#1E293B"),
+            self, height=140, state="disabled",
+            fg_color=("gray97", "#080C14"),
+            border_width=1, border_color=("#E5E7EB", "#1E2740"),
             corner_radius=10,
             font=ctk.CTkFont(size=12, family="Consolas"),
-            text_color=("#374151", "#CBD5E1"),
+            text_color=("#374151", "#4ADE80"),
         )
-        self._log.pack(fill="both", expand=True, padx=20, pady=(0, 16))
+        self._log.pack(fill="x", padx=20, pady=(0, 16))
 
         self.refresh_templates()
         self._load_schedule()
         self._schedule_check()
+        self._tick_countdown()
 
-    def _section_lbl(self, text):
+    def _section_lbl(self, text, parent=None):
         ctk.CTkLabel(
-            self, text=text, anchor="w",
+            parent if parent is not None else self._scroll,
+            text=text, anchor="w",
             font=ctk.CTkFont(size=10, weight="bold"),
             text_color=("gray50", "#475569"),
-        ).pack(fill="x", padx=22, pady=(12, 4))
+        ).pack(fill="x", padx=2, pady=(10, 3))
 
     # ── Templates ──────────────────────────────────────────────────────────
 
@@ -262,7 +269,7 @@ class BroadcastTab(ctk.CTkFrame):
             self._log_write(f"Тест ✗ {err}")
             self.after(0, lambda: show_toast(self, f"Ошибка теста: {err}", color="#EF4444"))
         finally:
-            self.after(0, lambda: self._test_btn.configure(state="normal", text="Отправить"))
+            self.after(0, lambda: self._test_btn.configure(state="normal", text="Отправить тест"))
 
     # ── Schedule ───────────────────────────────────────────────────────────
 
@@ -303,6 +310,43 @@ class BroadcastTab(ctk.CTkFrame):
         sched["template"] = self._template_var.get()
         self._storage.save_schedule(sched)
         self._update_sched_status(sched)
+        self._tick_countdown()
+
+    def _tick_countdown(self):
+        sched = self._storage.load_schedule()
+        text = ""
+        if sched.get("enabled") and not self._broadcasting:
+            mode = sched.get("mode", "По времени")
+            try:
+                if mode == "Каждые N часов":
+                    interval_secs = float(sched.get("interval_hours", 2)) * 3600
+                    last = float(sched.get("last_sent_at", 0))
+                    remaining = max(0.0, last + interval_secs - time.time())
+                    text = self._fmt_countdown(remaining)
+                else:
+                    t_str = sched.get("time", "")
+                    if t_str:
+                        now = datetime.datetime.now()
+                        h, m = map(int, t_str.split(":"))
+                        nxt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+                        if nxt <= now:
+                            nxt += datetime.timedelta(days=1)
+                        remaining = (nxt - now).total_seconds()
+                        text = self._fmt_countdown(remaining)
+            except Exception:
+                pass
+        self._countdown_lbl.configure(text=text)
+        self.after(10000, self._tick_countdown)
+
+    @staticmethod
+    def _fmt_countdown(secs: float) -> str:
+        if secs <= 0:
+            return "· скоро"
+        h = int(secs // 3600)
+        m = int((secs % 3600) // 60)
+        if h > 0:
+            return f"· через {h}ч {m:02d}мин"
+        return f"· через {m}мин {int(secs % 60):02d}с"
 
     def _update_sched_status(self, sched=None):
         if sched is None:
@@ -336,14 +380,20 @@ class BroadcastTab(ctk.CTkFrame):
             else:
                 if sched.get("time"):
                     now = datetime.datetime.now()
-                    current_time = now.strftime("%H:%M")
                     today = now.strftime("%Y-%m-%d")
-                    if current_time == sched.get("time") and sched.get("last_sent_date") != today:
+                    try:
+                        h, m = map(int, sched["time"].split(":"))
+                        sched_dt = now.replace(hour=h, minute=m, second=0, microsecond=0)
+                        # fire if we're within the last 30-second window and haven't fired today
+                        in_window = 0 <= (now - sched_dt).total_seconds() < 30
+                    except Exception:
+                        in_window = False
+                    if in_window and sched.get("last_sent_date") != today:
                         sched["last_sent_date"] = today
                         self._storage.save_schedule(sched)
                         if sched.get("template"):
                             self._template_var.set(sched["template"])
-                        self._log_write(f"Автоматическая рассылка по расписанию ({current_time})")
+                        self._log_write(f"Автоматическая рассылка по расписанию ({sched['time']})")
                         self._start_broadcast()
         self.after(30000, self._schedule_check)
 
@@ -552,7 +602,7 @@ class BroadcastTab(ctk.CTkFrame):
     def _broadcast_done(self, success=0, errors=0):
         self._broadcasting = False
         self._send_btn.configure(
-            state="normal", text="Разослать по всем чатам",
+            state="normal", text="▷  Разослать по всем чатам",
             fg_color="#F97316", hover_color="#EA6C0A",
             command=self._start_broadcast,
         )

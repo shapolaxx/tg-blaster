@@ -116,22 +116,24 @@ class TemplatesTab(ctk.CTkFrame):
         # Action bar
         bar = ctk.CTkFrame(self, fg_color="transparent")
         bar.pack(fill="x", padx=20, pady=(16, 8))
+        _b = dict(height=32, font=ctk.CTkFont(size=12))
         ctk.CTkButton(
-            bar, text="+ Добавить", width=120, height=36,
+            bar, text="＋ Добавить", width=104,
             fg_color="#F97316", hover_color="#EA6C0A",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            command=self._add,
-        ).pack(side="left", padx=(0, 8))
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._add, height=32,
+        ).pack(side="left", padx=(0, 4))
         ctk.CTkButton(
-            bar, text="Изменить", width=110, height=36,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("#374151", "#E2E8F0"),
-            command=self._edit,
-        ).pack(side="left", padx=(0, 8))
+            bar, text="Изменить", width=88,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("#374151", "#CBD5E1"),
+            command=self._edit, **_b,
+        ).pack(side="left", padx=(0, 4))
         ctk.CTkButton(
-            bar, text="Удалить", width=100, height=36,
-            fg_color="#EF4444", hover_color="#DC2626",
-            command=self._delete,
+            bar, text="Удалить", width=80,
+            fg_color=("#FEE2E2", "#3B0F0F"), hover_color=("#FECACA", "#4C1414"),
+            text_color=("#B91C1C", "#FCA5A5"),
+            command=self._delete, **_b,
         ).pack(side="left")
 
         self._listbox = ctk.CTkScrollableFrame(self, fg_color="transparent")
@@ -159,9 +161,9 @@ class TemplatesTab(ctk.CTkFrame):
         for t in templates:
             card = ctk.CTkFrame(
                 self._listbox,
-                fg_color=("white", "#0F172A"),
+                fg_color=("white", "#111827"),
                 border_width=1,
-                border_color=("#E2E8F0", "#1E293B"),
+                border_color=("#E2E8F0", "#1E2740"),
                 corner_radius=10,
             )
             card.pack(fill="x", pady=4)
@@ -169,7 +171,7 @@ class TemplatesTab(ctk.CTkFrame):
             btn = ctk.CTkButton(
                 card, text=t["name"], anchor="w",
                 fg_color="transparent",
-                hover_color=("gray92", "#1E293B"),
+                hover_color=("gray92", "#1E2740"),
                 text_color=("#111827", "white"),
                 font=ctk.CTkFont(size=13, weight="bold"),
                 corner_radius=8,

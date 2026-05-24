@@ -1,6 +1,13 @@
 import json
 import shutil
+import threading
 from pathlib import Path
+
+
+def _atomic_write(path: Path, data: str) -> None:
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(data, encoding="utf-8")
+    tmp.replace(path)
 
 
 class Storage:
@@ -11,6 +18,7 @@ class Storage:
         self.history_file = Path(history_file) if history_file else self.chats_file.parent / "history.json"
         self.schedule_file = Path(schedule_file) if schedule_file else self.chats_file.parent / "schedule.json"
         self.photos_dir.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
 
     def load_chats(self):
         if not self.chats_file.exists():
@@ -26,9 +34,7 @@ class Storage:
         return result
 
     def save_chats(self, chats):
-        self.chats_file.write_text(
-            json.dumps(chats, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        _atomic_write(self.chats_file, json.dumps(chats, ensure_ascii=False, indent=2))
 
     def load_templates(self):
         if not self.templates_file.exists():
@@ -36,9 +42,7 @@ class Storage:
         return json.loads(self.templates_file.read_text(encoding="utf-8"))
 
     def save_templates(self, templates):
-        self.templates_file.write_text(
-            json.dumps(templates, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        _atomic_write(self.templates_file, json.dumps(templates, ensure_ascii=False, indent=2))
 
     def copy_photo(self, src_path, template_id):
         src = Path(src_path)
@@ -52,30 +56,32 @@ class Storage:
         return json.loads(self.history_file.read_text(encoding="utf-8"))
 
     def save_history(self, history):
-        self.history_file.write_text(
-            json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        _atomic_write(self.history_file, json.dumps(history, ensure_ascii=False, indent=2))
 
     def add_history_entry(self, entry):
-        history = self.load_history()
-        history.append(entry)
-        self.save_history(history)
+        with self._lock:
+            history = self.load_history()
+            history.append(entry)
+            self.save_history(history)
+
+    def _stats_path(self) -> Path:
+        return self.chats_file.parent / "chat_stats.json"
 
     def load_chat_stats(self):
-        path = self.chats_file.parent / "chat_stats.json"
+        path = self._stats_path()
         if not path.exists():
             return {}
         return json.loads(path.read_text(encoding="utf-8"))
 
     def record_chat_stat(self, chat, success):
         import time
-        stats = self.load_chat_stats()
-        if chat not in stats:
-            stats[chat] = {"ok": 0, "error": 0}
-        stats[chat]["ok" if success else "error"] += 1
-        stats[chat]["last_sent_at"] = time.time()
-        path = self.chats_file.parent / "chat_stats.json"
-        path.write_text(json.dumps(stats, ensure_ascii=False, indent=2), encoding="utf-8")
+        with self._lock:
+            stats = self.load_chat_stats()
+            if chat not in stats:
+                stats[chat] = {"ok": 0, "error": 0}
+            stats[chat]["ok" if success else "error"] += 1
+            stats[chat]["last_sent_at"] = time.time()
+            _atomic_write(self._stats_path(), json.dumps(stats, ensure_ascii=False, indent=2))
 
     def get_chat_last_sent(self, chat: str) -> float:
         return self.load_chat_stats().get(chat, {}).get("last_sent_at", 0.0)
@@ -86,9 +92,7 @@ class Storage:
         return json.loads(self.schedule_file.read_text(encoding="utf-8"))
 
     def save_schedule(self, schedule):
-        self.schedule_file.write_text(
-            json.dumps(schedule, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+        _atomic_write(self.schedule_file, json.dumps(schedule, ensure_ascii=False, indent=2))
 
 
 def _app_base() -> Path:

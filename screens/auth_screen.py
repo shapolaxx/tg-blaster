@@ -1,3 +1,4 @@
+import threading
 import customtkinter as ctk
 from telethon.errors import SessionPasswordNeededError
 
@@ -18,7 +19,8 @@ class AuthScreen(ctk.CTkToplevel):
         self._phone = ctk.CTkEntry(self, width=360)
         self._phone.pack(padx=30)
 
-        ctk.CTkButton(self, text="Получить код", command=self._send_code).pack(pady=10)
+        self._send_btn = ctk.CTkButton(self, text="Получить код", command=self._send_code)
+        self._send_btn.pack(pady=10)
 
         ctk.CTkLabel(self, text="Код из Telegram:").pack(anchor="w", padx=30)
         self._code = ctk.CTkEntry(self, width=360)
@@ -41,32 +43,56 @@ class AuthScreen(ctk.CTkToplevel):
         fix_entry(self._phone)
         fix_entry(self._code)
 
+    def _set_busy(self, busy: bool):
+        state = "disabled" if busy else "normal"
+        self._send_btn.configure(state=state)
+        self._login_btn.configure(state=state)
+
     def _send_code(self):
         phone = self._phone.get().strip()
         if not phone:
             self._status.configure(text="Введите номер телефона", text_color="red")
             return
+        self._set_busy(True)
+        self._status.configure(text="Отправляем код...", text_color="gray")
+        threading.Thread(target=self._do_send_code, args=(phone,), daemon=True).start()
+
+    def _do_send_code(self, phone):
         try:
             self._tg.send_code(phone)
-            self._code.configure(state="normal")
-            self._login_btn.configure(state="normal")
-            self._status.configure(text="Код отправлен", text_color="green")
+            self.after(0, self._on_code_sent)
         except Exception as e:
-            self._status.configure(text=f"Ошибка: {e}", text_color="red")
+            self.after(0, lambda: self._status.configure(text=f"Ошибка: {e}", text_color="red"))
+            self.after(0, lambda: self._set_busy(False))
+
+    def _on_code_sent(self):
+        self._code.configure(state="normal")
+        self._login_btn.configure(state="normal")
+        self._send_btn.configure(state="normal")
+        self._status.configure(text="Код отправлен", text_color="green")
 
     def _sign_in(self):
         code = self._code.get().strip()
         if not code:
             self._status.configure(text="Введите код", text_color="red")
             return
+        self._set_busy(True)
+        self._status.configure(text="Входим...", text_color="gray")
+        threading.Thread(target=self._do_sign_in, args=(code,), daemon=True).start()
+
+    def _do_sign_in(self, code):
         try:
             self._tg.sign_in(code)
-            self.destroy()
-            self._on_done()
+            self.after(0, self._finish)
         except SessionPasswordNeededError:
-            self._show_password_field()
+            self.after(0, self._show_password_field)
         except Exception as e:
-            self._status.configure(text=f"Ошибка: {e}", text_color="red")
+            self.after(0, lambda: self._status.configure(text=f"Ошибка: {e}", text_color="red"))
+            self.after(0, lambda: self._set_busy(False))
+
+    def _finish(self):
+        self.destroy()
+        self._on_done()
 
     def _show_password_field(self):
         self._login_btn.configure(state="disabled")
@@ -81,10 +107,15 @@ class AuthScreen(ctk.CTkToplevel):
         if not password:
             self._status.configure(text="Введите пароль", text_color="red")
             return
+        self._pwd_btn.configure(state="disabled")
+        self._status.configure(text="Проверяем пароль...", text_color="gray")
+        threading.Thread(target=self._do_sign_in_password, args=(password,), daemon=True).start()
+
+    def _do_sign_in_password(self, password):
         try:
             self._tg.sign_in_password(password)
-            self.destroy()
-            self._on_done()
+            self.after(0, self._finish)
         except Exception as e:
-            self._status.configure(text=f"Неверный пароль: {e}", text_color="red")
-            self._pwd.delete(0, "end")
+            self.after(0, lambda: self._status.configure(text=f"Неверный пароль: {e}", text_color="red"))
+            self.after(0, lambda: self._pwd_btn.configure(state="normal"))
+            self.after(0, lambda: self._pwd.delete(0, "end"))

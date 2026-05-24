@@ -76,6 +76,11 @@ def parse_chat_link(url):
     if m:
         return url, None
 
+    # Raw numeric chat ID (e.g. -3796715835 or -1003796715835)
+    numeric = url.lstrip('-')
+    if numeric.isdigit():
+        return int(url), None
+
     # Plain @username or bare username
     if not url.startswith('@'):
         url = f"@{url}"
@@ -112,6 +117,13 @@ class TGClient:
     def connect(self):
         self._run(self._client.connect())
 
+    def sync_dialogs(self):
+        """Cache all user dialogs so numeric IDs can be resolved."""
+        try:
+            self._run(self._client.get_dialogs(limit=500))
+        except Exception:
+            pass
+
     def is_authorized(self):
         return self._run(self._client.is_user_authorized())
 
@@ -125,10 +137,30 @@ class TGClient:
     def sign_in_password(self, password):
         self._run(self._client.sign_in(password=password))
 
+    def _get_entity(self, chat):
+        """Resolve entity; for uncached numeric IDs search through dialogs."""
+        try:
+            return self._run(self._client.get_entity(chat))
+        except Exception:
+            if not isinstance(chat, int):
+                raise
+            return self._run(self._find_in_dialogs(chat))
+
+    async def _find_in_dialogs(self, chat_id: int):
+        abs_id = abs(chat_id)
+        s = str(abs_id)
+        # -1003796715835 → channel_id = 3796715835 (strip leading 100)
+        base_id = int(s[3:]) if s.startswith("100") and len(s) > 12 else abs_id
+        async for dialog in self._client.iter_dialogs(limit=500):
+            eid = getattr(dialog.entity, "id", None)
+            if eid and (eid == base_id or eid == abs_id):
+                return dialog.entity
+        raise ValueError(f"Entity {chat_id} not found in dialogs")
+
     def get_chat_title(self, url):
         try:
             chat, topic_id = parse_chat_link(url)
-            entity = self._run(self._client.get_entity(chat))
+            entity = self._get_entity(chat)
             title = getattr(entity, "title", None) or getattr(entity, "first_name", str(url))
             if topic_id:
                 title = f"{title} (тема #{topic_id})"

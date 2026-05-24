@@ -64,28 +64,30 @@ class ChatsTab(ctk.CTkFrame):
 
         # Action bar
         bar = ctk.CTkFrame(self, fg_color="transparent")
-        bar.pack(fill="x", padx=20, pady=(12, 4))
+        bar.pack(fill="x", padx=20, pady=(10, 4))
+        _btn = dict(height=32, font=ctk.CTkFont(size=12))
         ctk.CTkButton(
-            bar, text="+ Добавить", width=110, height=34,
+            bar, text="＋ Добавить", width=100,
             fg_color="#F97316", hover_color="#EA6C0A",
-            font=ctk.CTkFont(size=13, weight="bold"),
-            command=self._add,
-        ).pack(side="left", padx=(0, 6))
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._add, height=32,
+        ).pack(side="left", padx=(0, 4))
         ctk.CTkButton(
-            bar, text="Изменить", width=100, height=34,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("#374151", "#E2E8F0"),
+            bar, text="Изменить", width=84,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("#374151", "#CBD5E1"), **_btn,
             command=self._edit,
-        ).pack(side="left", padx=(0, 6))
+        ).pack(side="left", padx=(0, 4))
         ctk.CTkButton(
-            bar, text="Удалить", width=90, height=34,
-            fg_color="#EF4444", hover_color="#DC2626",
+            bar, text="Удалить", width=76,
+            fg_color=("#FEE2E2", "#3B0F0F"), hover_color=("#FECACA", "#4C1414"),
+            text_color=("#B91C1C", "#FCA5A5"), **_btn,
             command=self._delete,
-        ).pack(side="left", padx=(0, 6))
+        ).pack(side="left", padx=(0, 4))
         self._resolve_btn = ctk.CTkButton(
-            bar, text="↻ Названия", width=110, height=34,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("#374151", "#E2E8F0"),
+            bar, text="↻ Имена", width=76,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("gray50", "#64748B"), **_btn,
             command=self._resolve_all,
         )
         self._resolve_btn.pack(side="left")
@@ -93,29 +95,29 @@ class ChatsTab(ctk.CTkFrame):
         # Tools bar
         tools = ctk.CTkFrame(self, fg_color="transparent")
         tools.pack(fill="x", padx=20, pady=(0, 6))
+        _s = dict(height=28, font=ctk.CTkFont(size=11))
         ctk.CTkButton(
-            tools, text="Экспорт", width=90, height=30,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("gray50", "#64748B"), font=ctk.CTkFont(size=12),
+            tools, text="↑ Экспорт", width=76,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("gray50", "#64748B"), **_s,
             command=self._export,
         ).pack(side="left", padx=(0, 4))
         ctk.CTkButton(
-            tools, text="Импорт", width=90, height=30,
-            fg_color=("gray85", "#1E293B"), hover_color=("gray78", "#334155"),
-            text_color=("gray50", "#64748B"), font=ctk.CTkFont(size=12),
+            tools, text="↓ Импорт", width=76,
+            fg_color=("gray85", "#1A2236"), hover_color=("gray78", "#1E2D45"),
+            text_color=("gray50", "#64748B"), **_s,
             command=self._import,
-        ).pack(side="left", padx=(0, 12))
+        ).pack(side="left", padx=(0, 8))
         self._validate_btn = ctk.CTkButton(
-            tools, text="✓ Проверить доступность", width=190, height=30,
-            fg_color="#2563EB", hover_color="#1D4ED8",
-            font=ctk.CTkFont(size=12),
+            tools, text="✓ Проверить", width=106,
+            fg_color="#2563EB", hover_color="#1D4ED8", **_s,
             command=self._validate_all,
         )
-        self._validate_btn.pack(side="left", padx=(0, 12))
+        self._validate_btn.pack(side="left", padx=(0, 8))
         self._search_entry = ctk.CTkEntry(
-            tools, textvariable=self._search_var, placeholder_text="Поиск...", width=160, height=30,
+            tools, textvariable=self._search_var, placeholder_text="🔍 Поиск...", height=28,
         )
-        self._search_entry.pack(side="right")
+        self._search_entry.pack(side="right", fill="x", expand=True)
         self._search_var.trace_add("write", lambda *_: self._refresh())
 
         self._listbox = ctk.CTkScrollableFrame(self, fg_color="transparent")
@@ -153,12 +155,12 @@ class ChatsTab(ctk.CTkFrame):
 
         card = ctk.CTkFrame(
             self._listbox,
-            fg_color=("white", "#0F172A"),
+            fg_color=("white", "#111827"),
             border_width=1,
-            border_color=("#E2E8F0", "#1E293B"),
+            border_color=("#E5E7EB", "#1E2740"),
             corner_radius=8,
         )
-        card.pack(fill="x", pady=3)
+        card.pack(fill="x", pady=2)
 
         # Enable/disable switch
         enabled_var = ctk.BooleanVar(value=entry.get("enabled", True))
@@ -266,11 +268,12 @@ class ChatsTab(ctk.CTkFrame):
 
     def _validate_worker(self):
         chats = self._storage.load_chats()
+        labels = dict(self._val_labels)  # snapshot to avoid race with _refresh
         for entry in chats:
             chat = entry["chat"]
             ok = self._tg.get_chat_title(chat) is not None
             self._validation[chat] = ok
-            lbl = self._val_labels.get(chat)
+            lbl = labels.get(chat)
             if lbl:
                 self.after(0, self._apply_val_label, lbl, ok)
         self.after(0, self._validate_done)
@@ -293,11 +296,21 @@ class ChatsTab(ctk.CTkFrame):
     def _on_add_save(self, entry):
         chats = self._storage.load_chats()
         if not any(c["chat"] == entry["chat"] for c in chats):
-            entry["name"] = self._resolve_name(entry["chat"])
+            entry["name"] = ""
             entry["enabled"] = True
             chats.append(entry)
             self._storage.save_chats(chats)
+            threading.Thread(target=self._resolve_and_refresh, args=(entry["chat"],), daemon=True).start()
         self._refresh()
+
+    def _resolve_and_refresh(self, chat):
+        name = self._resolve_name(chat)
+        chats = self._storage.load_chats()
+        for c in chats:
+            if c["chat"] == chat and not c.get("name"):
+                c["name"] = name
+        self._storage.save_chats(chats)
+        self.after(0, self._refresh)
 
     def _edit(self):
         if not self._selected:

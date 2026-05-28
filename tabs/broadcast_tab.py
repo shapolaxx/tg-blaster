@@ -19,6 +19,7 @@ class BroadcastTab(ctk.CTkFrame):
         self._broadcasting = False
         self._stop_event = threading.Event()
         self._failed_entries = []
+        self._last_templates = []
 
         # ── Header ────────────────────────────────────────────────────────
         hdr = ctk.CTkFrame(self, fg_color="transparent")
@@ -79,6 +80,19 @@ class BroadcastTab(ctk.CTkFrame):
         self._template_menu.pack(side="left")
         ctk.CTkButton(top, text="↻", width=32, height=32, command=self.refresh_templates,
                       fg_color="transparent", hover_color=("gray80", "#1A2236")).pack(side="left", padx=4)
+
+        # Rotation toggle
+        rot_row = ctk.CTkFrame(top_card, fg_color="transparent")
+        rot_row.pack(fill="x", padx=12, pady=(0, 2))
+        self._rotation_var = ctk.BooleanVar()
+        ctk.CTkCheckBox(
+            rot_row, text="Ротация шаблонов (случайный для каждого чата)",
+            variable=self._rotation_var,
+            command=self._on_rotation_toggle,
+            font=ctk.CTkFont(size=12),
+        ).pack(side="left")
+        self._rotation_frame = ctk.CTkFrame(top_card, fg_color=("gray94", "#0B0F1E"), corner_radius=6)
+        self._rotation_checks: dict[str, ctk.BooleanVar] = {}
 
         preview_inner = ctk.CTkFrame(top_card, fg_color=("gray95", "#0B0F1E"), corner_radius=6)
         preview_inner.pack(fill="x", padx=12, pady=(0, 6))
@@ -210,6 +224,24 @@ class BroadcastTab(ctk.CTkFrame):
         if names:
             self._template_var.set(names[0])
             self._on_template_select(names[0])
+        for w in self._rotation_frame.winfo_children():
+            w.destroy()
+        self._rotation_checks.clear()
+        for name in names:
+            var = ctk.BooleanVar()
+            self._rotation_checks[name] = var
+            ctk.CTkCheckBox(
+                self._rotation_frame, text=name, variable=var,
+                font=ctk.CTkFont(size=12),
+            ).pack(anchor="w", padx=8, pady=2)
+
+    def _on_rotation_toggle(self):
+        if self._rotation_var.get():
+            self._rotation_frame.pack(fill="x", padx=12, pady=(0, 6))
+            self._template_menu.configure(state="disabled")
+        else:
+            self._rotation_frame.pack_forget()
+            self._template_menu.configure(state="normal")
 
     def _on_template_select(self, name):
         self._override_media = None
@@ -440,20 +472,30 @@ class BroadcastTab(ctk.CTkFrame):
     def _start_broadcast(self):
         if self._broadcasting:
             return
-        name = self._template_var.get()
-        template = next((t for t in self._storage.load_templates() if t["name"] == name), None)
-        if not template:
-            self._log_write("Выберите шаблон")
-            return
+        all_templates = self._storage.load_templates()
+        if self._rotation_var.get():
+            templates = [t for t in all_templates if self._rotation_checks.get(t["name"], ctk.BooleanVar()).get()]
+            if not templates:
+                self._log_write("Ротация: выберите хотя бы один шаблон")
+                return
+            template_name = f"ротация ({len(templates)} шаб.)"
+        else:
+            name = self._template_var.get()
+            template = next((t for t in all_templates if t["name"] == name), None)
+            if not template:
+                self._log_write("Выберите шаблон")
+                return
+            templates = [template]
+            template_name = name
         chats = [c for c in self._storage.load_chats() if c.get("enabled", True)]
         if not chats:
             self._log_write("Нет активных чатов — добавьте или включите чаты во вкладке Чаты")
             return
-        photo = self._override_media or template.get("photo", "")
         d_min, d_max = self._parse_delay_range()
         self._stop_event.clear()
         self._broadcasting = True
         self._failed_entries = []
+        self._last_templates = templates
         self._retry_btn.configure(state="disabled", fg_color="#6B7280", hover_color="#4B5563")
         self._send_btn.configure(
             text="Стоп", fg_color="#6B7280", hover_color="#4B5563",
@@ -462,7 +504,7 @@ class BroadcastTab(ctk.CTkFrame):
         self._progress.set(0)
         threading.Thread(
             target=self._broadcast,
-            args=(chats, template["text"], photo, name, d_min, d_max),
+            args=(chats, templates, template_name, d_min, d_max),
             daemon=True,
         ).start()
 
@@ -471,13 +513,8 @@ class BroadcastTab(ctk.CTkFrame):
         self._send_btn.configure(state="disabled", text="Остановка...")
 
     def _retry_failed(self):
-        if not self._failed_entries:
+        if not self._failed_entries or not self._last_templates:
             return
-        name = self._template_var.get()
-        template = next((t for t in self._storage.load_templates() if t["name"] == name), None)
-        if not template:
-            return
-        photo = self._override_media or template.get("photo", "")
         d_min, d_max = self._parse_delay_range()
         self._stop_event.clear()
         self._broadcasting = True
@@ -489,18 +526,19 @@ class BroadcastTab(ctk.CTkFrame):
         self._progress.set(0)
         threading.Thread(
             target=self._broadcast,
-            args=(self._failed_entries[:], template["text"], photo, name, d_min, d_max),
+            args=(self._failed_entries[:], self._last_templates, "повтор", d_min, d_max),
             daemon=True,
         ).start()
 
-    def _broadcast(self, chats, text, photo, template_name, d_min, d_max):
+    def _broadcast(self, chats, templates, template_name, d_min, d_max):
         log_lines = []
 
         def log(msg):
             log_lines.append(msg)
             self._log_write(msg)
 
-        log(f"Начинаю рассылку в {len(chats)} чатов...")
+        rotation = len(templates) > 1
+        log(f"Начинаю рассылку в {len(chats)} чатов" + (f" (ротация {len(templates)} шаб.)" if rotation else "") + "...")
         success = 0
         errors = 0
         skipped = 0
@@ -526,6 +564,10 @@ class BroadcastTab(ctk.CTkFrame):
                     self.after(0, self._progress.set, i / total)
                     continue
 
+            tmpl = random.choice(templates)
+            text = tmpl["text"]
+            photo = self._override_media or tmpl.get("photo", "")
+
             suffix = entry.get("suffix", "").strip()
             raw = f"{text}\n\n{suffix}" if suffix else text
             caption = self._apply_variables(raw)
@@ -539,7 +581,8 @@ class BroadcastTab(ctk.CTkFrame):
                 sent_messages.append({"chat": chat, "msg_id": msg_id})
                 display = entry.get("name") or chat
                 suffix_tag = " [+суффикс]" if suffix else ""
-                log(f"[{i}/{total}] ✓ {display}{suffix_tag}")
+                rot_tag = f" [{tmpl['name']}]" if rotation else ""
+                log(f"[{i}/{total}] ✓ {display}{suffix_tag}{rot_tag}")
                 log(f"   → {preview}")
                 success += 1
                 self._storage.record_chat_stat(chat, True)

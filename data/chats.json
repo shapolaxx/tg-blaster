@@ -7,7 +7,7 @@
   },
   {
     "chat": "t.me/ogma_yslugi",
-    "suffix": "Контакт для связи @phantommngr\nГарант @garantogma_bot",
+    "suffix": "Контакт для связи @phantommngr\nГарант @OgmaGarant_bot",
     "name": "Øgma | Чат Услуг",
     "enabled": true
   },
@@ -27,6 +27,108 @@
     "chat": "https://t.me/Frilans_chat_udalonka_na_domu",
     "suffix": "Контакт для связи @phantommngr",
     "name": "🍁 ФРИЛАНС 🍁 ЧАТ 🍁",
+    "enabled": true
+  },
+  {
+    "chat": "-1003796715835",
+    "suffix": "Контакт для связи @phantommngr\nГарант @GrdGuarantBot",
+    "name": "🤝 Greedy CHAT | Услуги 4.0",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/moskvarabota777_01",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Москва Работа/Moscow work",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/PR_FREEEE",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Бесплатная Реклама",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/kazan_kzn_116",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Казань Доска Объявлений",
+    "enabled": true
+  },
+  {
+    "chat": "https://t.me/+ozTniPyryXAxMjEy",
+    "suffix": "",
+    "name": "MARKET 404 | ЧАТ УСЛУГ",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/frelanschat",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Фриланс чат | Удалённая работа",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/freelance_chatik0",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Фриланс чат | Вакансии",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/poiskfreelance",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "ПОИСК ФРИЛАНСЕРОВ | ЧАТ",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/newfrelans",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Фриланс чат",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/proffreelancee_chat",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "НАСТОЯЩИЙ ФРИЛАНС ЧАТ №1",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/frilanc",
+    "suffix": "Контакт для связи @phantommngr\n#помогу",
+    "name": "Фриланс, удаленка, работа",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/tgjob",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Удаленщики: заказчики и исполнители",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/frilans_uslugi_vakansii",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "Фриланс чат | Услуги | Вакансии",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/jobospherechat",
+    "suffix": "#помогу",
+    "name": "JOBOSPHERE | ФРИЛАНС ЧАТ",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/RussianFreelance",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "ФРИЛАНС ЧАТ|ВАКАНСИИ|РЕЗЮМЕ|РАБОТА|УСЛУГИ",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/bsschatuslug",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "BSS | Чат Услуг",
+    "enabled": true
+  },
+  {
+    "chat": "t.me/unityservices",
+    "suffix": "Контакт для связи @phantommngr",
+    "name": "UNITY | УСЛУГИ",
     "enabled": true
   }
 ]

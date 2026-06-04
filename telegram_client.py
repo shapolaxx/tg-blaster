@@ -95,15 +95,41 @@ def load_config():
 
 
 def save_config(api_id, api_hash):
-    CONFIG_FILE.write_text(
-        json.dumps({"api_id": int(api_id), "api_hash": api_hash}, indent=2),
-        encoding="utf-8",
-    )
+    data = {"api_id": int(api_id), "api_hash": api_hash}
+    # preserve proxy if already saved
+    if CONFIG_FILE.exists():
+        existing = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+        if "proxy" in existing:
+            data["proxy"] = existing["proxy"]
+    CONFIG_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def save_proxy(server, port, secret):
+    data = {}
+    if CONFIG_FILE.exists():
+        data = json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
+    data["proxy"] = {"server": server, "port": int(port), "secret": secret}
+    CONFIG_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+
+def load_proxy():
+    if not CONFIG_FILE.exists():
+        return None
+    return json.loads(CONFIG_FILE.read_text(encoding="utf-8")).get("proxy")
 
 
 class TGClient:
     def __init__(self, api_id, api_hash):
-        self._client = TelegramClient(SESSION_FILE, api_id, api_hash)
+        from telethon.network import ConnectionTcpMTProxyRandomizedIntermediate
+        proxy_cfg = load_proxy()
+        if proxy_cfg:
+            self._client = TelegramClient(
+                SESSION_FILE, api_id, api_hash,
+                connection=ConnectionTcpMTProxyRandomizedIntermediate,
+                proxy=(proxy_cfg["server"], proxy_cfg["port"], proxy_cfg["secret"]),
+            )
+        else:
+            self._client = TelegramClient(SESSION_FILE, api_id, api_hash)
         self._loop = asyncio.new_event_loop()
         self._phone = None
 

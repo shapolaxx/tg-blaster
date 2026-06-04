@@ -50,11 +50,28 @@ class App(ctk.CTk):
         api_id, api_hash = config
         self._tg = TGClient(api_id, api_hash)
         self._tg.start_loop()
-        self._tg.connect()
-        if not self._tg.is_authorized():
-            AuthScreen(self, self._tg, on_done=self._after_auth)
+        threading.Thread(target=self._connect_bg, daemon=True).start()
+
+    def _connect_bg(self):
+        try:
+            self._tg.connect()
+            if not self._tg.is_authorized():
+                self.after(0, lambda: AuthScreen(self, self._tg, on_done=self._after_auth))
+            else:
+                self.after(0, self._after_auth)
+        except Exception as e:
+            self.after(0, lambda err=str(e): self._connect_failed(err))
+
+    def _connect_failed(self, error):
+        from tkinter import messagebox
+        retry = messagebox.askretrycancel(
+            "Ошибка подключения",
+            f"Не удалось подключиться к Telegram:\n{error}\n\nПроверьте интернет и попробуйте снова.",
+        )
+        if retry:
+            threading.Thread(target=self._connect_bg, daemon=True).start()
         else:
-            self._after_auth()
+            self.destroy()
 
     def _after_auth(self):
         threading.Thread(target=self._tg.sync_dialogs, daemon=True).start()
